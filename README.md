@@ -2,15 +2,11 @@
 
 # Masters 2026 MSS-621
 
- Here you will find the three example conference rooms all designed identically, but programmed differently by different programmers.   One of the biggest challenges I see C# programmers running into is not with creating drivers to talk to a device, or creating a class that pulls and processes information,  it's figuring out how to connect everything together.    This masters class presents solutions in multiple styles so that you can see full working examples of how to get  the job done.   
+Placeholder Text.  .   
 
 
 
-The code presented is Written by Jeremy Weatherford, Mark Machado, and Tim Gray.
-The touch panel project built in Crestron Construct source code is included as well as a compiled ch5z that can be ran as a web panel on the VC4 server
 
-
-Sadly any CrestronConsole Print statements will be difficult to view in VC4 due to the lack of a debugging console.  They do appear in the system logs.
 
 
 
