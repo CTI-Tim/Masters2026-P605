@@ -1,0 +1,125 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\VS20XX Projects\\Masters2026Nax\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\hardware\\hardwaresetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\hardware\\hardwaresetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\broker\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\broker\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\controlsystem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\controlsystem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\broker\\broker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\broker\\broker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\hardware\\naxamp.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\hardware\\naxamp.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\ui\\xpanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\ui\\xpanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "HardwareSetup.cs",
+              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "RelativeToolTip": "Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "ViewState": "AgIAADkAAAAAAAAAAAAIwGoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-04T19:47:11.525Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Message.cs",
+              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Message.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\Broker\\Message.cs",
+              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Message.cs",
+              "RelativeToolTip": "Masters2026Nax\\Broker\\Message.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-04T15:13:49.911Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "NaxAmp.cs",
+              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Hardware\\NaxAmp.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\Hardware\\NaxAmp.cs",
+              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Hardware\\NaxAmp.cs",
+              "RelativeToolTip": "Masters2026Nax\\Hardware\\NaxAmp.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFcAAABjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-16T13:53:25.743Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Broker.cs",
+              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Broker.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\Broker\\Broker.cs",
+              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Broker.cs",
+              "RelativeToolTip": "Masters2026Nax\\Broker\\Broker.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEQAAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-12T18:47:54.225Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ControlSystem.cs",
+              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\ControlSystem.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\ControlSystem.cs",
+              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\ControlSystem.cs",
+              "RelativeToolTip": "Masters2026Nax\\ControlSystem.cs",
+              "ViewState": "AgIAAE4AAAAAAAAAAAAAAGsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-12T18:31:01.032Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Xpanel.cs",
+              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\UI\\Xpanel.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\UI\\Xpanel.cs",
+              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\UI\\Xpanel.cs",
+              "RelativeToolTip": "Masters2026Nax\\UI\\Xpanel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-12T18:30:56.453Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

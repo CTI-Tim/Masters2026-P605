@@ -1,0 +1,20 @@
+{
+  "_fileMetadata": {
+    "_schema": "1.0.0.0",
+    "_createdByAppHost": "2.901.21.0",
+    "_created": "2026-06-11T11:46:18.7884995-04:00",
+    "_lastModifiedByAppHost": "2.901.21.0",
+    "_minimumAppHost": "2.901.0",
+    "_modified": "2026-06-11T11:46:18.7884952-04:00"
+  },
+  "_solution": {
+    "_name": "Masters2026NaxExample",
+    "_projects": [
+      {
+        "_name": "MainUI",
+        "_filename": "MainUI/MainUI.cuip",
+        "_datetime": "2026-06-11T15:46:18.777363Z"
+      }
+    ]
+  }
+}

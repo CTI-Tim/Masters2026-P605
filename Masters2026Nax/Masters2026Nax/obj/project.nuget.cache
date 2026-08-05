@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "edkHy4VKDCY=",
+  "success": true,
+  "projectFilePath": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Masters2026Nax.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\tim\\.nuget\\packages\\crestron.simplsharp.sdk.library\\2.21.257\\crestron.simplsharp.sdk.library.2.21.257.nupkg.sha512",
+    "C:\\Users\\tim\\.nuget\\packages\\crestron.simplsharp.sdk.program\\2.21.257\\crestron.simplsharp.sdk.program.2.21.257.nupkg.sha512",
+    "C:\\Users\\tim\\.nuget\\packages\\crestron.simplsharp.sdk.programlibrary\\2.21.257\\crestron.simplsharp.sdk.programlibrary.2.21.257.nupkg.sha512",
+    "C:\\Users\\tim\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.29\\microsoft.windowsdesktop.app.ref.8.0.29.nupkg.sha512",
+    "C:\\Users\\tim\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.29\\microsoft.netcore.app.ref.8.0.29.nupkg.sha512",
+    "C:\\Users\\tim\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.29\\microsoft.aspnetcore.app.ref.8.0.29.nupkg.sha512"
+  ],
+  "logs": []
+}
