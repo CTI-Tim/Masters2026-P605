@@ -1,0 +1,103 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+*******************************************************************************************/
+/*******************************************************************************************
+  Compiler Directives
+*******************************************************************************************/
+//#DEFINE_CONSTANT
+#CATEGORY "46" "TOPSECRET" // Custom
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+#ENCODING_ASCII
+#HELP_BEGIN
+   Provides unique CRPC identifier tag.
+#HELP_END
+
+
+/*******************************************************************************************
+  Include Libraries
+*******************************************************************************************/
+#CRESTRON_SIMPLSHARP_LIBRARY "AppHelperClasses v2_0"
+                    
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+*******************************************************************************************/
+DIGITAL_INPUT Get_New_Tag;
+							
+//BUFFER_INPUT
+DIGITAL_OUTPUT Ready;
+
+ANALOG_OUTPUT TagHiVal,
+						  TagLoVal;
+						  
+STRING_OUTPUT Tag$;
+
+/*******************************************************************************************
+  Global Variables
+*******************************************************************************************/
+
+/*******************************************************************************************
+  Functions
+  (Add any additional functions here)
+  Note:  Functions must be physically placed before the location in
+         the code that calls them.
+*******************************************************************************************/
+
+String_Function GenerateTag()
+{
+	signed_long_integer generatedTag;
+	string tag[5];
+	
+	// Get tag from OS
+	generatedTag = CRPCJoinTagGenerator.GetNewTag();
+	
+	// We need to prevent "00"
+	if (generatedTag = 0)
+	{
+		generatedTag = CRPCJoinTagGenerator.GetNewTag();
+	}
+	
+	makestring(tag, "%02lX", generatedTag);
+	
+	return (tag);
+}
+
+
+
+
+/*******************************************************************************************
+  Event Handlers
+*******************************************************************************************/
+PUSH Get_New_Tag
+{
+	string tag[5];
+	tag = GenerateTag();
+	
+	TagHiVal = byte(tag,1);
+	TagLoVal = byte(tag,2);
+	Tag$ = tag;
+}
+
+             
+/*******************************************************************************************
+  Main()
+*******************************************************************************************/
+
+Function Main()
+{
+	
+	string tag[5];
+	
+	WaitForInitializationComplete();
+	
+	tag = GenerateTag();
+	
+	TagHiVal = byte(tag,1);
+	TagLoVal = byte(tag,2);
+	Tag$ = tag;
+	
+	Ready = 1;
+}
+
+
