@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="UI\CrpcRoutTesting.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Crestron.SimplSharp.SDK.Program" Version="2.21.257" />
   </ItemGroup>
 

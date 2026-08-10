@@ -222,7 +222,7 @@ namespace Masters2026Nax
         private void connectCrpc()
         {
             
-            myContract.MediaPlayerPage.MediaPlayer.MediaPlayer_Message_FB(" {\"ver\":\"4.0.0.\",\"tag\":\"01\",\"src\":\"1\"}"); // Send the source message
+            myContract.MediaPlayerPage.MediaPlayer.MediaPlayer_Message_FB(" {\"ver\":\"4.0.0\",\"tag\":\"94\",\"src\":\"1\"}"); // Send the source message
             myContract.MediaPlayerPage.MediaPlayer.MediaPlayer_Offline(false);
             myContract.MediaPlayerPage.MediaPlayer.MediaPlayer_Player_Name("TEST");
             

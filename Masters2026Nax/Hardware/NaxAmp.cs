@@ -171,7 +171,7 @@ namespace Masters2026Nax.Hardware
         private void Players_TransportControlPropertyChange(DmNaxXPlayers device, PlayerTransportControlEventArgs paramArgs)
         {
             var player = paramArgs.PlayerNumber;
-            string crpc = myNaxAmp.Players.TransportControls[player].CrpcFeedback.ToString();
+            var crpc = myNaxAmp.Players.TransportControls[player].CrpcFeedback.StringValue; //.ToString(); <-- This can be the cause of the pain
 
             var e = new CrpcMessageEventArgs
             {
