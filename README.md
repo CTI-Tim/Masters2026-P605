@@ -54,35 +54,19 @@ The goal is not to create the most complicated architecture possible. Quite the 
 
 #### **NAX Hardware Wrapper Classes**
 
-The NAX wrapper classes sit between our application and the Crestron NAX device classes.
-
-The Crestron libraries expose a large amount of functionality because they need to support everything the hardware can do. Our application only needs a small part of that functionality.
-
-The wrapper classes give the rest of our program a simpler interface for the things we actually want to do.
-
-For example, the application should be able to tell a NAX amplifier to route a source without every other class needing to understand the complete Crestron NAX API.
-
-This also gives us one place to deal with device specific behavior and any interesting things we discover while working with the Crestron libraries.
+The NAX wrapper classes sit between our application and the Crestron NAX device classes. The Crestron libraries expose a large amount of functionality because they need to support everything the hardware can do. Our application only needs a small part of that functionality. The wrapper classes give the rest of our program a simpler interface for the things we actually want to do. For example, the application should be able to tell a NAX amplifier to route a source without every other class needing to understand the complete Crestron NAX API. This also gives us one place to deal with device specific behavior and any interesting things we discover while working with the Crestron libraries.
 
 Good wrappers reduce complexity. Bad wrappers just move it somewhere else and give it a new file name.
 
 #### **HardwareSetup**
 
-The `HardwareSetup` class is responsible for creating the hardware wrapper classes and connecting them to the rest of the application.
-
-It receives commands from the Message Broker, translates those messages into calls to the appropriate hardware wrapper, and takes hardware feedback and sends it back through the Message Broker.
-
-This means the UI never needs a reference to `NaxAmp`, `NaxIO`, or any other hardware class.
+The `HardwareSetup` class is responsible for creating the hardware wrapper classes and connecting them to the rest of the application. It receives commands from the Message Broker, translates those messages into calls to the appropriate hardware wrapper, and takes hardware feedback and sends it back through the Message Broker. This means the UI never needs a reference to `NaxAmp`, `NaxIO`, or any other hardware class.
 
 HardwareSetup is where the application and hardware meet, but it should not become the place where all of the application logic gets dumped. translations such as source mapping happen here so the messages get back to the touchpanel properly.   
 
 #### **NaxSourceConfiguration**
 
-`NaxSourceConfiguration` contains the source information shared by the user interface and hardware portions of the program.
-
-A source definition can contain the friendly name displayed to the user, the actual NAX source number, an AES67 Session Name when required, and whether the source represents a Media Player.
-
-The important part is that the rest of the application does not care where this configuration came from.
+`NaxSourceConfiguration` contains the source information shared by the user interface and hardware portions of the program. A source definition can contain the friendly name displayed to the user, the actual NAX source number, an AES67 Session Name when required, and whether the source represents a Media Player. The important part is that the rest of the application does not care where this configuration came from.
 
 For the class example we create the configuration directly in C# using `AddZone()` and `AddSource()`.
 
@@ -108,9 +92,7 @@ NaxSourceConfiguration.AddSource(
     true);
 ```
 
-A larger program would absolutely have a configuration class read the same information from JSON, XML, a database, or another configuration source and then use `AddZone()` and `AddSource()` to build the configuration.
-
-Nothing else in the program needs to change just because we changed where the configuration came from.
+A larger program would absolutely have a configuration class read the same information from JSON, XML, a database, or another configuration source and then use `AddZone()` and `AddSource()` to build the configuration. Nothing else in the program needs to change just because we changed where the configuration came from.
 
 **NOTE:** The source configuration must be created before the hardware and UI classes are created. Both use this information during their setup.
 
@@ -125,17 +107,7 @@ Configuration is a dependency of the rest of the application, so configuration c
 
 #### **UI**
 
-The `UI` class handles the Construct HTML5 XPanel.
-
-It creates the XPanel, connects the generated Construct Contract, registers UI events, sends user actions into the Message Broker, and receives feedback messages that are used to update the panel.
-
-The UI should be fairly dumb.
-
-If a source button is pressed, the UI reports that the source button was pressed. It does not need to understand how that source is routed through a NAX amplifier.
-
-If the hardware reports that a source changed, the UI receives the resulting feedback message and updates the appropriate button.
-
-Keeping the UI separated from the hardware also means another interface could be added later without teaching that interface how all of the NAX hardware works.
+The `UI` class handles the Construct HTML5 XPanel. It creates the XPanel, connects the generated Construct Contract, registers UI events, sends user actions into the Message Broker, and receives feedback messages that are used to update the panel, if a source button is pressed, the UI reports that the source button was pressed. It does not need to understand how that source is routed through a NAX amplifier. If the hardware reports that a source changed, the UI receives the resulting feedback message and updates the appropriate button. Keeping the UI separated from the hardware also means another interface could be added later without teaching that interface how all of the NAX hardware works.
 
 #### **CRPC Media Player**
 
@@ -160,15 +132,11 @@ The UI does not need to know how the CRPC message reached the hardware and the h
 
 ## How to Use it
 
-The example is already assembled as a complete program, but the classes are deliberately separated so students can follow how information moves through the application.
-
-One of the most important parts of the example is the Message Broker.
+The example is already assembled as a complete program, but the classes are deliberately separated so students can follow how information moves through the application. One of the most important parts of the example is the Message Broker.
 
 ### Message Broker
 
-The Message Broker is a simple way for different parts of the program to communicate without requiring direct references to each other.
-
-Normally we could do something like:
+The Message Broker is a simple way for different parts of the program to communicate without requiring direct references to each other. Normally we could do something like:
 
 ```C#
 myNaxAmp.RouteAudio(1, 5);
@@ -186,11 +154,7 @@ Broker.SendMessage(
 
 The UI knows that the user selected source button 2.
 
-It does not know which NAX device controls Zone 1, what the actual NAX source number is, whether the source uses AES67, or how the hardware needs to be configured.
-
-It doesn't need to know at all what is what.
-
-Somewhere else in the application we register a method that wants to receive that message.
+It does not know which NAX device controls Zone 1, what the actual NAX source number is, whether the source uses AES67, or how the hardware needs to be configured. It doesn't need to know at all what is what. Somewhere else in the application we register a method that wants to receive that message.
 
 ```C#
 Broker.AddDelegate(
@@ -353,11 +317,7 @@ and another class subscribes to:
 "Zone1Sources"
 ```
 
-they are two different messages.
-
-The broker is not going to guess what the programmer meant.
-
-The message key and the data we agree to send with it form a small contract between the different parts of the application.
+they are two different messages. The broker is not going to guess what the programmer meant. The message key and the data we agree to send with it form a small contract between the different parts of the application.
 
 ### Multiple Subscribers
 
@@ -373,17 +333,11 @@ Broker.AddDelegate(
     SomeOtherMethod);
 ```
 
-When `"Zone1SourceFb"` is sent, both methods will receive the message.
-
-This can be useful when several parts of the application need to know that the same thing happened.
-
-The sender still does not need to know who is listening.
+When `"Zone1SourceFb"` is sent, both methods will receive the message. This can be useful when several parts of the application need to know that the same thing happened. The sender still does not need to know who is listening.
 
 ### Feedback Through the Broker
 
-Commands are not the only thing that travel through the broker.
-
-Hardware feedback comes back the same way.
+Commands are not the only thing that travel through the broker. Hardware feedback comes back the same way.
 
 For example, HardwareSetup can publish:
 
@@ -413,19 +367,11 @@ private void Zone1SetSourceFb(Message m)
 }
 ```
 
-The hardware does not know that an XPanel exists.
-
-It only reports the new state.
-
-That separation is the entire reason we are using the broker.
+The hardware does not know that an XPanel even exists, it only reports the new state. That separation is the entire reason we are using the broker.
 
 ### Why Use a Message Broker?
 
-We absolutely could write this program without one.
-
-For a small program it might even require fewer lines of code.
-
-The reason we are using it is to demonstrate how we can reduce dependencies between different parts of a larger application.
+We absolutely could write this program without one and for a small program it might even require fewer lines of code. The reason we are using it is to demonstrate how we can reduce dependencies between different parts of a larger application.
 
 Without the broker we can quickly end up with:
 
@@ -454,17 +400,11 @@ The hardware can later say:
 Zone 1 is now on Source 2.
 ```
 
-The UI can decide how to display that feedback.
-
-Neither side needs to know how the other side accomplished its job.
-
-The Message Broker is not something that should automatically be added to every C# program. It is a tool. In this program it gives us a useful way to demonstrate separating application components without introducing a much larger framework.
+The UI can decide how to display that feedback. Neither side needs to know how the other side accomplished its job. The Message Broker is not something that should automatically be added to every C# program. It is a tool. In this program it gives us a useful way to demonstrate separating application components without introducing a much larger framework.
 
 ### AES67 Streams
 
-NAX AES67 streams in this example are configured using their Session Name.
-
-The source configuration stores the Session Name along with the source definition.
+NAX AES67 streams in this example are configured using their Session Name. The source configuration stores the Session Name along with the source definition.
 
 ```C#
 NaxSourceConfiguration.AddSource(
@@ -476,11 +416,7 @@ NaxSourceConfiguration.AddSource(
 
 When HardwareSetup determines that the selected source uses a stream, it can retrieve the Session Name from `NaxSourceConfiguration` and pass it to the appropriate hardware wrapper.
 
-This keeps the AES67 configuration out of the UI.
-
-The user selects `"USB Input"`.
-
-The application figures out what `"USB Input"` actually means to the hardware.
+This keeps the AES67 configuration out of the UI. The user selects `"USB Input"`. The application then figures out what `"USB Input"` actually means to the hardware.
 
 ### Media Player Sources
 
@@ -513,23 +449,13 @@ Again, the UI does not need to understand the NAX routing rules to make that dec
 
 ## Things to Remember
 
-This example intentionally favors code that students can follow over code that demonstrates every possible C# language feature.
-
-Do not assume fewer lines of code automatically means better code.
-
-Do not build an interface, factory, reflection system, or another abstraction just because two small methods happen to look similar. If the abstraction makes the program harder to understand than the duplicate code, we have not improved anything.
+This example intentionally favors code that programmers can follow over code that demonstrates every possible C# language feature, I am intentionally not getting extremely clever or objectifying code to the point that nobody can read it like some programmers out there. Do not assume fewer lines of code automatically means better code, readability matters greatly.  Do not build an interface, factory, reflection system, or another abstraction just because two small methods happen to look similar. If the abstraction makes the program harder to understand than the duplicate code, we have not improved anything.
 
 At the same time, when several parts of the program are doing exactly the same job and can cleanly share a method, use one.
 
 The goal is readable code with clear responsibilities.
 
 Most importantly, do not copy code from this example without understanding what it is doing. Break it, change it, add to it, and use the debugger to follow the data through the application.
-
-
-
-
-
-
 
 
 
