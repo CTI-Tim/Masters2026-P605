@@ -1,13 +1,11 @@
-﻿// Using crestron libraries, turn this off for your own sanity.
+﻿// Using Crestron libraries, turn this off for your own sanity.
 #nullable disable
 
+using Crestron.SimplSharp;
 using Crestron.SimplSharpPro.AudioDistribution;
-using Crestron.SimplSharpPro.EthernetCommunication;
+using Crestron.SimplSharpPro.Media;
+using CwsDebug;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Masters2026Nax.Hardware
 {
@@ -18,9 +16,9 @@ namespace Masters2026Nax.Hardware
     // is to keep the code simple, readable, and easy to understand rather than
     // filling every method with defensive checks.
     //
-    // If I was coding a public library used by thousands of developers, especially one
-    // with incomplete or poor documentation, additional validation would make more
-    // sense because you cannot control how the API is used.
+    // If I was coding a public library used by thousands of developers, especially
+    // one with incomplete or poor documentation, additional validation would make
+    // more sense because you cannot control how the API is used.
     //
     // In a well-documented library, however, the documentation is part of the
     // contract. The programmer is expected to read it and use the API correctly.
@@ -28,208 +26,278 @@ namespace Masters2026Nax.Hardware
     // Yes I just said the programmer is expected to read documentation.
     //
     // Adding dozens of checks to guard against incorrect usage often adds more code,
-    // more complexity, and more maintenance than it adds value. As with everything in
-    // software engineering, this is a design decision, not a rule.
+    // more complexity, and more maintenance than it adds value. As with everything
+    // in software engineering, this is a design decision, not a rule.
     // Once again only add complexity when it solves a real problem,
     // not simply because you can.
     // -----------------------------------------------------------------------------
 
     /// <summary>
-    /// This is a wrapper class to simplify and unify operation of crestron hardware.
+    /// This is a wrapper class to simplify and unify operation of Crestron hardware.
     /// Yes this class is going to be tightly coupled but it's not designed to really
-    /// be infinately reuseable.  It can be re-used system to system and you could
-    /// create an array of NaxAmp's in this program, but it's specific to this hardware
+    /// be infinitely reusable. It can be reused system to system and you could create
+    /// an array of NaxAmp objects in this program, but it's specific to this hardware
     /// and specific to my use decisions.
-    /// 
-    /// It's OK to make code that is tightly coupled, not everything has to be abstracted
+    ///
+    /// It's OK to make code that is tightly coupled. Not everything has to be abstracted.
     /// </summary>
     public class NaxAmp
     {
-        DmNax8Zsa myNaxAmp;
+        private DmNax8Zsa myNaxAmp;
+
+        // The NAX Amp Media Players can sometimes send the exact same CRPC message
+        // more than once. Keep the last message so we can ignore a duplicate that
+        // arrives immediately after it.
+        private string lastCrpcMessage = "";
 
         public event EventHandler<ZoneFeedbackEventArgs> ZoneFeedbackChanged;
-        //public event EventHandler<AmplifierFeedbackEventArgs> AmplifierFeedbackChanged;
         public event EventHandler<CrpcMessageEventArgs> CrpcMessageReceived;
 
-          public NaxAmp(ushort AmpIpid, ControlSystem cs )
+
+        // #########################################################################
+        // Constructor and Hardware Setup
+        // #########################################################################
+
+        public NaxAmp(ushort ampIpid, ControlSystem cs)
         {
-            myNaxAmp = new DmNax8Zsa( AmpIpid, cs );
+            myNaxAmp = new DmNax8Zsa(ampIpid, cs);
+
+            // Hook the hardware events before registration so we are ready to receive
+            // feedback as soon as the device starts communicating with the program.
+            myNaxAmp.Nax.NaxPropertyChange += Nax_NaxPropertyChange;
+            myNaxAmp.BaseEvent += MyNaxAmp_BaseEvent;
+            myNaxAmp.OnlineStatusChange += MyNaxAmp_OnlineStatusChange;
             myNaxAmp.OnZoneChange += MyNaxAmp_OnZoneChange;
             myNaxAmp.Players.TransportControlPropertyChange += Players_TransportControlPropertyChange;
+            myNaxAmp.Routing.RoutingPropertyChange += Routing_RoutingPropertyChange;
+
             myNaxAmp.Register();
 
-            // Set everything to auto initiate as we expect it
-            // also defailt to no stream in startup
-            foreach(var rx in myNaxAmp.Nax.Rx)
+            // IMPORTANT:
+            // Register() only tells us the device has been registered with the Crestron
+            // program. It does NOT mean the physical device is ready to accept commands.
+            // Do not send startup configuration until we have seen feedback from it.
+
+            // We expect the NAX receivers to automatically initiate their streams.
+            foreach (var rx in myNaxAmp.Nax.Rx)
             {
                 rx.AutomaticInitiationEnable();
-                rx.MulticastAddress.StringValue = "0.0.0.0";  
-            }
-
-
-        }
-
-        /// <summary>
-        /// Select audio zone and source to route. Invalid selection does nothing
-        /// 
-        /// </summary>
-        /// <param name="Zone"> Audio Output 1-8</param>
-        /// <param name="Source"> 0 No Audio, 1-4 DigIn,5-8Analog,9-16MediaPlayer,17 AES67Stream</param>
-        public void RouteAudio(uint Zone, DmNaxSource Source)
-        {
-            if (Zone >= 0 || Zone < 8)
-            {
-                // myNaxAmp.Zones[Zone]!  we added the ! to tell the compiler to shut up we know it's not nullable if we did not shit off the notices above.
-                myNaxAmp.Zones[Zone]!.Source.UShortValue = (ushort)Source;
             }
         }
-        /// <summary>
-        /// Sets the stream for this Zone's AES67 reciever that is at source 17.
-        /// </summary>
-        /// <param name="Zone"></param>
-        /// <param name="Address"></param>
-        /// <param name="Port"></param>
-        public void SetStream(uint Zone, string Address, short Port)
-        {
-            myNaxAmp.Nax.Rx[Zone].Port.ShortValue = Port;
-            myNaxAmp.Nax.Rx[Zone].MulticastAddress.StringValue = Address;
-        }
-        public void ClearStream(uint Zone)
-        {
-            myNaxAmp.Nax.Rx[Zone].MulticastAddress.StringValue = "0.0.0.0";
-        }
+
+
+        // #########################################################################
+        // Public Hardware Methods
+        // #########################################################################
 
         /// <summary>
-        /// Sends CRPC data to the chosen player in the NAXAmp
+        /// Returns the current AES67 Session Name being received by a zone.
         /// </summary>
-        /// <param name="player">Index of the player desired</param>
-        /// <param name="CrpcPayload">CRPC string payload to send to the player, usually from the touchpanel media player object or a CRPC router</param>
-        public void SendCrpc(uint player, string CrpcPayload)
+        /// <param name="output">NAX output zone 1-8.</param>
+        /// <returns>The current AES67 Session Name.</returns>
+        public string GetSessionFb(uint output)
         {
-            myNaxAmp.Players.TransportControls[player].Crpc.StringValue = CrpcPayload;
-        }
-
-
-        // ################################### helper methods
-
-        /// <summary>
-        /// Converts a DM-NAX source number into its corresponding DmNaxSource
-        /// enumeration. This is primarily used when converting numeric values from the
-        /// Message Broker or other external interfaces into the strongly typed enum
-        /// used by the wrapper.
-        /// </summary>
-        /// <param name="sourceNumber">
-        /// The numeric source number reported by the hardware.
-        /// </param>
-        /// <returns>
-        /// The corresponding DmNaxSource enumeration.
-        /// </returns>
-        public static DmNaxSource GetSourceFromNumber(ushort sourceNumber)
-        {
-            return (DmNaxSource)sourceNumber;
+            return myNaxAmp.Nax.Rx[output].SessionNameFeedback.StringValue;
         }
 
         /// <summary>
-        /// Converts a DmNaxSource enumeration into the numeric source value expected by
-        /// the DM-NAX hardware. This is primarily used when sending commands to the
-        /// hardware or publishing source information through the Message Broker.
+        /// Routes an audio source to a NAX output zone.
         /// </summary>
+        /// <param name="zone">Audio output zone 1-8.</param>
         /// <param name="source">
-        /// The source enumeration.
+        /// 0 = Unroute, 1-4 = Digital Inputs, 5-8 = Analog Inputs,
+        /// 9-16 = Media Players, 17 = AES67 Stream.
         /// </param>
-        /// <returns>
-        /// The numeric source value.
-        /// </returns>
-        public static ushort GetSourceNumber(DmNaxSource source)
+        public void RouteAudio(uint zone, ushort source)
         {
-            return (ushort)source;
+            if (zone >= 1 && zone <= 8)
+            {
+                myNaxAmp.Routing.Zones[zone].UShortValue = source;
+            }
         }
 
-        //  ############################# Event Handlers From Hardware
+        /// <summary>
+        /// Sets the AES67 stream for the specified NAX zone.
+        /// AES67 is source 17 on the NAX amplifier.
+        /// NAX currently uses the AES67 Session Name to select the stream
+        /// rather than allowing us to configure the multicast address directly.
+        /// </summary>
+        /// <param name="zone">NAX zone to configure.</param>
+        /// <param name="session">AES67 Session Name to connect to.</param>
+        public void SetStream(uint zone, string session)
+        {
+            myNaxAmp.Nax.Rx[zone].SessionName.StringValue = session;
+        }
+
+        /// <summary>
+        /// Clears the AES67 stream from the specified NAX zone.
+        /// </summary>
+        /// <param name="zone">NAX zone to clear.</param>
+        public void ClearStream(uint zone)
+        {
+            myNaxAmp.Nax.Rx[zone].SessionName.StringValue = "";
+        }
+
+        /// <summary>
+        /// Sends CRPC data to the selected Media Player in the NAX amplifier.
+        /// </summary>
+        /// <param name="player">Media Player number.</param>
+        /// <param name="crpcPayload">
+        /// CRPC string to send to the player, usually from the touchpanel Media
+        /// Player object or a CRPC router.
+        /// </param>
+        public void SendCrpc(uint player, string crpcPayload)
+        {
+            myNaxAmp.Players.TransportControls[player].Crpc.StringValue = crpcPayload;
+        }
+
+
+        // #########################################################################
+        // Helper Methods
+        // #########################################################################
+
+        private void InitializeZoneRouting()
+        {
+            for (uint zone = 1; zone <= 8; zone++)
+            {
+                RouteAudio(zone, 0);
+            }
+        }
+
+
+        // #########################################################################
+        // Hardware Event Handlers
+        // #########################################################################
+
+        private void MyNaxAmp_OnlineStatusChange(
+            Crestron.SimplSharpPro.GenericBase currentDevice,
+            Crestron.SimplSharpPro.OnlineOfflineEventArgs args)
+        {
+            CwsDebugPage.LogInfo($"Online Event {args.DeviceOnLine}");
+        }
+
+        private void MyNaxAmp_BaseEvent(
+            Crestron.SimplSharpPro.GenericBase device,
+            Crestron.SimplSharpPro.BaseEventArgs args)
+        {
+            CwsDebugPage.LogInfo($"Base Event {args.EventId}");
+        }
+
+        private void Nax_NaxPropertyChange(
+            object sender,
+            Crestron.SimplSharpPro.DeviceSupport.GenericEventArgs args)
+        {
+            CwsDebugPage.LogInfo($"NAX Property Event {args.EventId}");
+        }
 
         private void MyNaxAmp_OnZoneChange(object sender, ZoneEventArgs args)
         {
-            // we build our object to send to the event. Note some of the data we can not get
-            // from the event so we instead read it directly.  Why move extra work to your 
-            // event handler elsewhere when we can simply do it here.
-            ZoneFeedbackEventArgs e = new ZoneFeedbackEventArgs
+            var zone = args.Zone.Number;
+
+            // The event tells us which zone changed and gives us some of its feedback.
+            // For anything not included in the event we simply read the current value
+            // directly from the device. There is no reason to make whoever subscribes
+            // to our event go back and ask the hardware for the rest of the information.
+            var e = new ZoneFeedbackEventArgs
             {
-                ZoneNumber = args.Zone.Number,
-                SourceFb = (DmNaxSource)args.Zone.SourceFeedback.ShortValue,
+                ZoneNumber = (ushort)zone,
+                SourceFb = myNaxAmp.Routing.Zones[zone].UShortValue,
                 VolumeFb = args.Zone.VolumeFeedback.UShortValue,
-                AmpOnFb = myNaxAmp.Zones[args.Zone.Number].ZoneAmplifierOnFeedback.BoolValue
+                AmpOnFb = args.Zone.MuteOnFeedback.BoolValue
             };
 
-
-            RaiseZoneFeedbackChanged(e); //Fire the event
-
+            RaiseZoneFeedbackChanged(e);
         }
 
-        private void Players_TransportControlPropertyChange(DmNaxXPlayers device, PlayerTransportControlEventArgs paramArgs)
+        private void Routing_RoutingPropertyChange(
+            object sender,
+            Crestron.SimplSharpPro.DeviceSupport.GenericEventArgs args)
         {
-            var player = paramArgs.PlayerNumber;
-            var crpc = myNaxAmp.Players.TransportControls[player].CrpcFeedback;
+            // The event tells us that something changed, but neglects to tell us what
+            // actually changed. Fortunately args.Index identifies the zone that generated
+            // the event, so we can use that to query the current routing feedback.
+            //
+            // While it might seem like the event should have included this information,
+            // the current device class and SIMPL module have been built around this
+            // behavior for quite some time. Changing it now would introduce compatibility
+            // issues, so this is effectively the contract of the API.
+            var zone = (uint)args.Index;
+
+            var e = new ZoneFeedbackEventArgs
+            {
+                ZoneNumber = (ushort)zone,
+                SourceFb = myNaxAmp.Routing.ZoneFeedbacks[zone].UShortValue
+            };
+
+            RaiseZoneFeedbackChanged(e);
+        }
+
+        private void Players_TransportControlPropertyChange(
+            DmNaxXPlayers device,
+            PlayerTransportControlEventArgs args)
+        {
+            var player = args.PlayerNumber;
+            var crpc =
+                myNaxAmp.Players.TransportControls[player].CrpcFeedback.StringValue;
+
+            // The NAX Media Players can occasionally send the exact same CRPC message
+            // twice. There is no reason to send duplicate data through the rest of our
+            // program, so ignore it when it is identical to the previous message.
+            //
+            // This only catches messages repeated back to back. If another message is
+            // received in between, the original message is allowed through again.
+            if (crpc != lastCrpcMessage)
+            {
+                lastCrpcMessage = crpc;
+
+                var e = new CrpcMessageEventArgs
+                {
+                    Player = player,
+                    CRPCMessage = crpc
+                };
+
+                RaiseCrpcMessageReceived(e);
+            }
         }
 
 
-        // Our Event Handlers
-        protected virtual void RaiseZoneFeedbackChanged(ZoneFeedbackEventArgs args)
+        // #########################################################################
+        // Events We Send to the Application
+        // #########################################################################
+
+        protected virtual void RaiseZoneFeedbackChanged(
+            ZoneFeedbackEventArgs args)
         {
-            // Years ago we always copied the delegate into a local variable.
-            // This was in case we got unsubscribed and it avoided exceptions being thrown
-            // Since C# 6, the compiler does that work for us when we use ?.Invoke().
+            // Years ago we always copied the delegate into a local variable. This was
+            // in case we got unsubscribed and it avoided exceptions being thrown.
+            // Since C# 6 the compiler does that work for us when we use ?.Invoke().
             // If you look through older code, you'll see both styles.
-
-            ZoneFeedbackChanged.Invoke(this, args);
+            ZoneFeedbackChanged?.Invoke(this, args);
         }
-        protected virtual void RaiseCrpcMessageReceived(CrpcMessageEventArgs args)
+
+        protected virtual void RaiseCrpcMessageReceived(
+            CrpcMessageEventArgs args)
         {
-            CrpcMessageReceived.Invoke(this, args);
+            CrpcMessageReceived?.Invoke(this, args);
         }
 
+
+        // #########################################################################
+        // Event Data
+        // #########################################################################
 
         public class ZoneFeedbackEventArgs : EventArgs
         {
-            public uint ZoneNumber;
-            public DmNaxSource SourceFb;
+            public ushort ZoneNumber;
+            public ushort SourceFb;
             public ushort VolumeFb;
             public bool AmpOnFb;
         }
+
         public class CrpcMessageEventArgs : EventArgs
         {
-            public ushort Player;
+            public uint Player;
             public string CRPCMessage;
         }
-
-        // ############################### ENUMS
-
-        
-        public enum DmNaxSource
-        {
-            Unroute = 0,
-
-            DigitalInput1 = 1,
-            DigitalInput2 = 2,
-            DigitalInput3 = 3,
-            DigitalInput4 = 4,
-
-            AnalogInput1 = 5,
-            AnalogInput2 = 6,
-            AnalogInput3 = 7,
-            AnalogInput4 = 8,
-
-            MediaPlayer1 = 9,
-            MediaPlayer2 = 10,
-            MediaPlayer3 = 11,
-            MediaPlayer4 = 12,
-            MediaPlayer5 = 13,
-            MediaPlayer6 = 14,
-            MediaPlayer7 = 15,
-            MediaPlayer8 = 16,
-
-            Aes67Stream = 17
-        }
-
-
     }
 }

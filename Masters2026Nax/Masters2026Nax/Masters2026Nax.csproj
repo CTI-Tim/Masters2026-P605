@@ -7,13 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="UI\CrpcRoutTesting.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Crestron.SimplSharp.SDK.Program" Version="2.21.257" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="UI\Contract\ComponentMediator.g.cs">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Compile>
+    <Reference Include="CwsDebug">
+      <HintPath>E:\Masters 2026 Working\CwsDebug-1.5.1\CwsDebug.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

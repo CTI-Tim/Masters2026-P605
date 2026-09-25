@@ -2,6 +2,8 @@
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.AudioDistribution;
 using Crestron.SimplSharpPro.UI;
+using CwsDebug;
+using Masters2026Nax.Configuration;
 using Masters2026Nax.Hardware;
 using System;
 using System.Collections.Generic;
@@ -17,7 +19,7 @@ namespace Masters2026Nax
     //
     // If you are learning modern C#, you will notice these sprinkled throughout
     // the code. It can look like someone lost a fight with the punctuation keys,
-    // but there is actually a reason for it.
+    // but there is actually a good reason for it.
     //
     // Beginning with C# 8.0, Microsoft added Nullable Reference Types. The compiler
     // now tries to determine if an object could possibly be null and warns you when
@@ -41,9 +43,10 @@ namespace Masters2026Nax
     // warning exists. Use '!' and '?' only when you know something the compiler cannot.
     //
     // My preference when I am writing classes that wrap Crestron C# classes is to
-    // put the #nullable false compiler switch at the top of the cs file that I
+    // put the '#nullable disable' compiler switch at the top of the cs file that I
     // will be leveraging a lot of Crestron class elements. But I
     // manage my nullables manually.  If you want to use that, be aware of it.
+    // for example I use it in the Message.cs class because those are NOT nullable
     // -----------------------------------------------------------------------------
 
     /// <summary>
@@ -87,9 +90,9 @@ namespace Masters2026Nax
     /// </summary>
     public class ControlSystem : CrestronControlSystem
     {
-        // Globals
-        Xpanel myXpanel;
-        HardwareSetup Hardware;
+        // this right here, THIS is a valid use for the ? here.  because these two class containers ARE nullable!
+        UI? myXpanel;
+        HardwareSetup? Hardware;
 
         /// <summary>
         ///  Default constructor. No access to really anything here. You can set the max number of threads here, instantiate code only classes, but that's about it.
@@ -116,10 +119,70 @@ namespace Masters2026Nax
         /// </summary>
         public override void InitializeSystem()
         {
-            // Lets initialize the classes
-            myXpanel = new Xpanel(0x03, this);
-            Hardware = new HardwareSetup(this);
+            // Start the Debugger class and register it's location in the CWS URL
+            // you will find the page at http://<processor>/VirtualControl/Rooms/<roomId>/cws/debugger/debugger.html
+            CwsDebug.CwsDebugPage.Register("/debugger");  // /debugger adds the folder level after /cws to become /cws/debugger
+            CwsDebugPage.LogInfo("Initialize started");
+            
+            // Load Config -- Yes this needs to be loaded first because the other classes rely on it.
+            SetupNaxSources();
+            CwsDebugPage.LogInfo("Source Map loaded");
 
+            // Lets initialize the  hardware classes
+            myXpanel = new UI(0x03, this);
+            CwsDebugPage.LogInfo("TP Registered");
+
+
+            Hardware = new HardwareSetup(this);
+            CwsDebugPage.LogInfo("Hardware Setup Complete");
+            // It can seem silly to put the above debug statements in but it gives real info when failures occour.
+            // If we do not see those messages then  the class above it failed
+            // there are instances in Crestron libraries that the exception will be swallowed
+
+        }
+        // For this example we are building the NAX source configuration directly in code
+        // so it is easy to see exactly what is being added and how the configuration works.
+        //
+        // There is nothing requiring the configuration to be created this way. The
+        // NaxSourceConfiguration class does not care where this information came from,
+        // it only stores the zones and sources we give it.
+        //
+        // In a larger program you could create your own configuration class that reads
+        // this information from a JSON, XML, or other configuration file and then calls
+        // AddZone() and AddSource() to build the exact same configuration.
+        // For the lab we are going to keep it simple and build the configuration manually.
+        // Once you understand what is happening here, changing where the data comes from
+        // does not require changing the rest of the program.
+        private void SetupNaxSources()
+        {
+            // Zone 1 - NAX Amp
+            ushort zone1 = NaxSourceConfiguration.AddZone();
+
+            NaxSourceConfiguration.AddSource(zone1, "NaxAmp Analog In 1", 5);
+            NaxSourceConfiguration.AddSource(zone1, "USB Input", 17, "Stream02c4.42.68.74.dd.01");
+            NaxSourceConfiguration.AddSource(zone1, "Media Player 1", 9, "", true);
+            NaxSourceConfiguration.AddSource(zone1, "Media Player 2", 10, "", true);
+            NaxSourceConfiguration.AddSource(zone1, "Zone Off", 0);
+
+
+            // Zone 2 - NAX Amp
+            ushort zone2 = NaxSourceConfiguration.AddZone();
+
+            NaxSourceConfiguration.AddSource(zone2, "NaxAmp Analog In 1", 5);
+            NaxSourceConfiguration.AddSource(zone2, "USB Input", 17, "Stream02c4.42.68.74.dd.01");
+            NaxSourceConfiguration.AddSource(zone2, "Media Player 1", 9, "", true);
+            NaxSourceConfiguration.AddSource(zone2, "Media Player 2", 10, "", true);
+            NaxSourceConfiguration.AddSource(zone2, "Zone Off", 0);
+
+
+            // Zone 3 - NAX AUD-IO
+            ushort zone3 = NaxSourceConfiguration.AddZone();
+
+            NaxSourceConfiguration.AddSource(zone3, "NaxAmp Analog In 1", 2, "RCA1500.10.7f.f4.6a.5d");
+            NaxSourceConfiguration.AddSource(zone3, "USB Input", 2, "Stream02c4.42.68.74.dd.01");
+            NaxSourceConfiguration.AddSource(zone3, "Media Player 1", 2, "MediaStream1900.10.7f.f4.6a.5d", true);
+            NaxSourceConfiguration.AddSource(zone3, "Media Player 2", 2, "MediaStream21000.10.7f.f4.6a.5d", true);
+            NaxSourceConfiguration.AddSource(zone3, "Zone Off", 0);
         }
 
         // Trap for program starting or stopping or pausing. We only care about stop honestly.
@@ -130,6 +193,49 @@ namespace Masters2026Nax
                 //myDebug.Dispose();
             }
         }
+
+        // -----------------------------------------------------------------------------
+        // Why are we wrapping the Crestron classes? And then wrapping those classes?
+        // WE have classes in classes in classes!
+        //
+        // This is one of those Object-Oriented Programming concepts that gets taught
+        // all the time, but rarely gets explained very well. When I was first learning
+        // C#, my reaction was pretty simple:
+        //
+        //     "Great... now I have another class to look around in and manage."
+        //
+        // Honestly, it felt like someone took a simple problem and added another layer
+        // just because programmers like adding abstraction for fun.
+        //
+        // In reality there is actually a good reason for it.
+        //
+        // The Crestron classes know how to talk to Crestron hardware. They know nothing
+        // about how THIS application wants to use that hardware, and that's exactly how
+        // it should be. This wrapper becomes the translator between our application and the hardware.
+        // The rest of the program doesn't need to know which property changes the
+        // source, which event reports volume feedback, or what magic sequence of method
+        // calls wakes the amplifier up in the morning. It simply calls methods like
+        // SetVolume(), SelectSource(), or Mute() and lets this class deal with the
+        // hardware details.
+        //
+        // Another huge advantage is that hardware changes. APIs change. Sometimes
+        // manufacturers even decide to "improve" things. (Programmers everywhere just
+        // collectively sighed with flashbacks of Sonos breaking things)
+        // If that happens, most of the changes are isolated to
+        // their singular class instead of being scattered throughout the entire application.
+        // Wrappers also make testing much easier. If you decide to write an emulator,
+        // simulator, or simply fake the hardware for testing, you already have a clean
+        // interface. The rest of the application doesn't care if it's talking to a
+        // $15,000 audio device or a class making things up as it goes along.
+        //
+        // A good wrapper hides complexity. A bad wrapper just moves the complexity somewhere else and gives
+        //  it a new name.
+        //
+        // The goal of all of this is to make using the hardware easier than using the
+        // hardware directly, and make it easier later to rip it out and change it if needed.
+        //
+        // And yes I comment a lot. 
+        // -----------------------------------------------------------------------------
 
     }
 }

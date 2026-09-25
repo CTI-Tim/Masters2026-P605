@@ -1,0 +1,22 @@
+{FileMetadata}
+Schema = "1.0.0.0"
+CreatedByAppHost = "2.1701.12.0"
+Created = 2026-09-23 10:08:34.222597-04:00
+LastModifiedByAppHost = "2.1701.12.0"
+Modified = 2026-09-23 10:08:34.222592-04:00
+CreatedByProjectApp = "1.4901.18.0"
+LastModifiedByProjectApp = "1.4901.18.0"
+MinimumProjectApp = ""
+MinimumAppHost = "2.1700.0"
+
+{AssetAttributes}
+
+[Attributes]
+Id = "33716c83-c951-40d0-a177-bb687101b80d"
+Name = "TouchpanelBackgroundCrestron"
+SourceUri = "TouchpanelBackgroundCrestron.png"
+AspectRatio = "1.7768331562167907"
+AssetSourceType = "File"
+Username = ""
+Password = ""
+

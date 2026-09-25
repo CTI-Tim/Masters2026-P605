@@ -1,5 +1,4 @@
-﻿#nullable disable // I know by design that these below are not nullable, so shut up the compiler here
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,9 +11,8 @@ namespace MessageBroker
     //
     // You may see examples online that use private constructors, factory methods,
     // validation, helper functions, and enough design patterns to make a software
-    // architect smile. There is certainly a place for those techniques.
-    //
-    // This absolutely isn't one of them.
+    // architect very happy. There is certainly a place for those techniques. This
+    // absolutely isn't one of them.
     //
     // The Message Broker is simply moving data from one part of the application to
     // another. The message key defines the contract between the sender and the
@@ -37,11 +35,22 @@ namespace MessageBroker
     // Don't add complexity unless it buys you something worthwhile. 
     // -----------------------------------------------------------------------------
 
+    // I am setting all of these in the class so they are clearly not nullable.
+    // technically the digital and analog do not need this, but deterministic coding 
+    // leaves no doubt to any other programmer that looks at it later.
+    // And yes I used Digital, Analog, Serial on purpose.  But this object can be more
+    // complex to convey more information.  You are free to modify how this works for 
+    // your own uses.
+
+    // Lets put it this way,  Message broker is all I use anymore, I really hate the
+    // passing of objects hell that can cause context problems with traditional
+    // ways of setting things up. and it can easily be expanded to send messages
+    // beyond this program and to other programs.
     public class Message
     {
-        public bool Digital { get; set; }
-        public ushort Analog { get; set; }
-        public string Serial { get; set; }
+        public bool Digital { get; set; } = false;
+        public ushort Analog { get; set; } = 0;
+        public string Serial { get; set; } = ""; 
     }
 }
 

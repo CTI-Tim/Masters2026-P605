@@ -1,8 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)crestron.simplsharp.sdk.library\2.21.257\build\Crestron.SimplSharp.SDK.Library.targets" Condition="Exists('$(NuGetPackageRoot)crestron.simplsharp.sdk.library\2.21.257\build\Crestron.SimplSharp.SDK.Library.targets')" />
-    <Import Project="$(NuGetPackageRoot)crestron.simplsharp.sdk.programlibrary\2.21.257\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets" Condition="Exists('$(NuGetPackageRoot)crestron.simplsharp.sdk.programlibrary\2.21.257\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" />
-    <Import Project="$(NuGetPackageRoot)crestron.simplsharp.sdk.program\2.21.257\build\Crestron.SimplSharp.SDK.Program.targets" Condition="Exists('$(NuGetPackageRoot)crestron.simplsharp.sdk.program\2.21.257\build\Crestron.SimplSharp.SDK.Program.targets')" />
-  </ImportGroup>
-</Project>

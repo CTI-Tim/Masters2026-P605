@@ -1,0 +1,35 @@
+{FileMetadata}
+Schema = "1.0.0.0"
+CreatedByAppHost = "2.1701.12.0"
+Created = 2026-09-23 09:51:01.076041-04:00
+LastModifiedByAppHost = "2.1701.12.0"
+Modified = 2026-09-23 11:46:04.354148-04:00
+CreatedByProjectApp = "1.4901.18.0"
+LastModifiedByProjectApp = "1.4901.18.0"
+MinimumProjectApp = "1.2600.1"
+MinimumAppHost = "2.1700.0"
+
+{DeviceResolutionSource}
+[]
+
+{ProjectAttributes}
+
+[Attributes]
+Name = "Masters2026NaxPanel"
+ThemeId = "light-theme.css"
+ProjectThemeIds = "light-theme.css"
+ThemePageColor = "#2573da"
+IncludeUnusedAsset = "True"
+OverrideThemeColor = "True"
+SdkId = "CH5:2.19.1"
+ComponentKey = "UiEditor"
+Id = "d18412d7-7690-4086-9159-cbeda4202e2a"
+RuntimeThemeJoin = "0"
+RuntimeLanguageJoin = "0"
+DefaultComponentMode = "custom"
+DefaultFontFamily = "Roboto"
+DeviceResolutionIds = "D-L-TST1080-1280-0800"
+ipId = "03"
+ProjectSchemaVersion = "13"
+ContractIsStale = "false"
+

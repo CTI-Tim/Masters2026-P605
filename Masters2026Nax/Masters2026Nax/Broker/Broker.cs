@@ -36,10 +36,10 @@ namespace MessageBroker
     /// AggregateException.
     ///
     /// A common suggestion is to automatically launch a thread for each
-    /// subscriber. While that sounds really attractive, it creates more problems than
+    /// subscriber. While that sounds like a great ideae, it creates more problems than
     /// it solves. Execution order becomes wildly unpredictable, exceptions become harder
     /// to track down, and the caller no longer knows when processing has actually
-    /// completed.
+    /// completed. In Automation that can cause all kinds of problems.
     ///
     /// If a subscriber needs to perform long-running work, network operations,
     /// file I/O, database access, or anything else that may block, THAT subscriber method
