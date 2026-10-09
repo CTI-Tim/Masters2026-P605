@@ -96,7 +96,7 @@ namespace Masters2026Nax.Hardware
         }
         public void Zone3VolumeSet(Message m)
         {
-            myBtIo.Volume(1, m.Analog);
+            myBtIo.Volume(2, m.Analog);
         }
 
 
@@ -117,7 +117,7 @@ namespace Masters2026Nax.Hardware
         }
         public void BtVolume(ushort volume)
         {
-            myBtIo.Volume(1, volume);
+            myBtIo.Volume(2, volume);
         }
         public void Zone1SourceSelect(Message m)
         {

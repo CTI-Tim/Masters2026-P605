@@ -1,17 +1,21 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\VS20XX Projects\\Masters2026Nax\\",
+  "WorkspaceRootPath": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\hardware\\naxbluetooth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|c:\\users\\tim\\documents\\github\\masters2026-p605\\masters2026nax\\masters2026nax\\hardware\\hardwaresetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\hardware\\hardwaresetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|c:\\users\\tim\\documents\\github\\masters2026-p605\\masters2026nax\\masters2026nax\\hardware\\naxbluetooth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\hardware\\naxbluetooth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\broker\\broker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|c:\\users\\tim\\documents\\github\\masters2026-p605\\masters2026nax\\masters2026nax\\broker\\broker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\broker\\broker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|d:\\vs20xx projects\\masters2026nax\\masters2026nax\\broker\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|c:\\users\\tim\\documents\\github\\masters2026-p605\\masters2026nax\\masters2026nax\\broker\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{816E75E9-F04D-0A0E-9BEF-4FCDB3DEF113}|Masters2026Nax\\Masters2026Nax.csproj|solutionrelative:masters2026nax\\broker\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -22,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -30,39 +34,50 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
+              "Title": "HardwareSetup.cs",
+              "DocumentMoniker": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "ToolTip": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "RelativeToolTip": "Masters2026Nax\\Hardware\\HardwareSetup.cs",
+              "ViewState": "AgIAAE0AAAAAAAAAAAAwwGAAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-09T20:05:30.932Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "Message.cs",
-              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Message.cs",
+              "DocumentMoniker": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Broker\\Message.cs",
               "RelativeDocumentMoniker": "Masters2026Nax\\Broker\\Message.cs",
-              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Message.cs",
+              "ToolTip": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Broker\\Message.cs",
               "RelativeToolTip": "Masters2026Nax\\Broker\\Message.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAC8AAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-25T14:57:37.156Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-25T14:57:37.156Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Broker.cs",
+              "DocumentMoniker": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Broker\\Broker.cs",
+              "RelativeDocumentMoniker": "Masters2026Nax\\Broker\\Broker.cs",
+              "ToolTip": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Broker\\Broker.cs",
+              "RelativeToolTip": "Masters2026Nax\\Broker\\Broker.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAABGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-25T14:55:32.013Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "Broker.cs",
-              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Broker.cs",
-              "RelativeDocumentMoniker": "Masters2026Nax\\Broker\\Broker.cs",
-              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Broker\\Broker.cs",
-              "RelativeToolTip": "Masters2026Nax\\Broker\\Broker.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAABGAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-25T14:55:32.013Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
               "Title": "NaxBluetooth.cs",
-              "DocumentMoniker": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Hardware\\NaxBluetooth.cs",
+              "DocumentMoniker": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Hardware\\NaxBluetooth.cs",
               "RelativeDocumentMoniker": "Masters2026Nax\\Hardware\\NaxBluetooth.cs",
-              "ToolTip": "D:\\VS20XX Projects\\Masters2026Nax\\Masters2026Nax\\Hardware\\NaxBluetooth.cs",
+              "ToolTip": "C:\\Users\\tim\\Documents\\GitHub\\Masters2026-P605\\Masters2026Nax\\Masters2026Nax\\Hardware\\NaxBluetooth.cs",
               "RelativeToolTip": "Masters2026Nax\\Hardware\\NaxBluetooth.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAGAAAAAAAAAAAAAmwHwAAABTAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-08-31T16:06:24.093Z",
               "EditorCaption": ""
