@@ -1,6 +1,6 @@
 {
   "name": "Masters2026NaxPanel",
-  "timestamp": "2026-09-23T15:33:48.7332784+00:00",
+  "timestamp": "2026-10-09T13:42:21.304243+00:00",
   "version": "1.0.0.0",
   "schema_version": 1,
   "extra_value": "",
@@ -32,22 +32,19 @@
           "1005": "Main.Output1SourceSel.Button5ItemSelected"
         },
         "2": {
-          "1": "MediaControlVisibilityJoin"
+          "1": "MediaControlVisibilityJoin",
+          "3": "MediaControl.ReturnBtn.Selected"
         },
         "3": {
           "1": "MediaControl.MediaPlayer.Refresh",
           "2": "MediaControl.MediaPlayer.Offline"
-        },
-        "4": {
-          "1": "SideBar.ReturnBtn.Visibility_fb",
-          "3": "SideBar.ReturnBtn.Selected",
-          "4": "SideBar.VolumeDnBtn.Selected",
-          "5": "SideBar.VolumeUpBtn.Selected"
         }
       },
       "numeric": {
-        "4": {
-          "3": "SideBar.VolumeFb.Touchfb"
+        "1": {
+          "4": "Main.Output1Volume.LowerTouchfb",
+          "5": "Main.Output2Volume.LowerTouchfb",
+          "6": "Main.Output3Volume.LowerTouchfb"
         }
       },
       "string": {
@@ -147,20 +144,25 @@
           "joinId": 1005,
           "smartObjectId": 7
         },
-        "SideBar.ReturnBtn.Press": {
+        "MediaControl.ReturnBtn.Press": {
           "joinId": 2,
-          "smartObjectId": 4
-        },
-        "SideBar.VolumeDnBtn.Press": {
-          "joinId": 3,
-          "smartObjectId": 4
-        },
-        "SideBar.VolumeUpBtn.Press": {
-          "joinId": 4,
-          "smartObjectId": 4
+          "smartObjectId": 2
         }
       },
-      "numeric": {},
+      "numeric": {
+        "Main.Output1Volume.LowerTouch": {
+          "joinId": 4,
+          "smartObjectId": 1
+        },
+        "Main.Output2Volume.LowerTouch": {
+          "joinId": 5,
+          "smartObjectId": 1
+        },
+        "Main.Output3Volume.LowerTouch": {
+          "joinId": 6,
+          "smartObjectId": 1
+        }
+      },
       "string": {
         "MediaControl.MediaPlayer.CRPC": {
           "joinId": 1,

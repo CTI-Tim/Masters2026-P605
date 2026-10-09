@@ -6,51 +6,44 @@ using Crestron.SimplSharpPro.AudioDistribution;
 
 namespace Masters2026Nax.Hardware
 {
-    // ============================================================================
-    // A NOTE ABOUT THE DM-NAX-AUD-IO
-    // ============================================================================
-    // This class wraps the Crestron DM-NAX-AUD-IO and gives the rest of our program
-    // a much simpler interface to the hardware. The rest of the program should not
-    // need to understand how Crestron exposes routing, volume, mute, or AES67 streams
-    // on this particular device.
-    //
-    // The AUD-IO routing is also a little different from the larger NAX amplifier.
-    // There are only three valid routing choices:
-    //
-    //      0   Off
-    //      1   Analog Input
-    //      2   AES67 Stream
-    //
-    // Since these are fixed choices that actually describe what this device can do,
-    // an enum makes sense here. This is different from the NAX amplifier where the
-    // source number is really part of a larger source configuration.
-    //
-    // AES67 has two important details in this example. We currently select streams
-    // using SessionName because setting MulticastAddress directly does not work as
-    // expected with the NAX library.
-    //
-    // We also cannot assume the physical device is ready just because Register()
-    // returned. Commands sent immediately after registration may simply go nowhere.
-    // We wait until we have seen feedback from the device before doing our initial
-    // setup. At that point we know we are actually talking to the hardware.
-    //
-    // Like the other wrappers, this class also collects Crestron's individual
-    // feedback events and turns them into one event for the rest of our program.
-    // The application should not need to know which Crestron event means volume
-    // changed and which one means routing changed. That is this wrapper's problem.
-    //
-    // The goal is not to reproduce the entire Crestron API. We expose what this
-    // program needs and hide the device-specific details here where they belong.
-    // ============================================================================
-
-    internal class NaxIO
+    public class NaxIO
     {
-        public enum Sources
-        {
-            Off = 0,
-            AnalogIn = 1,
-            Aes67Stream = 2
-        }
+        // ============================================================================
+        // A NOTE ABOUT THE DM-NAX-AUD-IO
+        // ============================================================================
+        // This class wraps the Crestron DM-NAX-AUD-IO and gives the rest of our program
+        // a much simpler interface to the hardware. The rest of the program should not
+        // need to understand how Crestron exposes routing, volume, mute, or AES67 streams
+        // on this particular device.
+        //
+        // The AUD-IO routing is also a little different from the larger NAX amplifier.
+        // There are only three valid routing choices:
+        //
+        //      0   Off
+        //      1   Analog Input
+        //      2   AES67 Stream
+        //
+        // Since these are fixed choices that actually describe what this device can do,
+        // an enum makes sense here. This is different from the NAX amplifier where the
+        // source number is really part of a larger source configuration.
+        //
+        // AES67 has two important details in this example. We currently select streams
+        // using SessionName because setting MulticastAddress directly does not work as
+        // expected with the NAX library.
+        //
+        // We also cannot assume the physical device is ready just because Register()
+        // returned. Commands sent immediately after registration may simply go nowhere.
+        // We wait until we have seen feedback from the device before doing our initial
+        // setup. At that point we know we are actually talking to the hardware.
+        //
+        // Like the other wrappers, this class also collects Crestron's individual
+        // feedback events and turns them into one event for the rest of our program.
+        // The application should not need to know which Crestron event means volume
+        // changed and which one means routing changed. That is this wrapper's problem.
+        //
+        // The goal is not to reproduce the entire Crestron API. We expose what this
+        // program needs and hide the device-specific details here where they belong.
+        // ============================================================================
 
         private readonly DmNaxAudIoResidential myNaxIo;
 
@@ -89,13 +82,17 @@ namespace Masters2026Nax.Hardware
         }
 
         /// <summary>
-        /// Routes one of the available AUD-IO sources to the requested zone.
-        /// Input 0 = Off
-        /// Input 1 = Analog Input
-        /// Input 2 = AES67 Stream
+        /// Routes one of the available AUD-IO sources to its single output.
+        /// The Output parameter is retained for consistency with the other NAX wrapper classes.
         /// </summary>
-        public void RouteAudio(uint zone, ushort input)
+        /// <param name="Output">Output number. The AUD-IO only has one output, so this value is not used.</param>
+        /// <param name="input">Source to route. 0 = Off, 1 = Analog Input, 2 = AES67 Stream.</param>
+        public void RouteAudio(uint Output, ushort input)
         {
+            // WAIT! You declare Output as a parameter but its never used!
+            // Correct.  It's for being consistant.  we have only one output on 
+            // NaxIO but this matches the design pattern we use elsewhere to be consistant.
+
             // Contrary to what you might expect from looking at the API, the AUD-IO
             // only accepts 0-2 here.
             //
@@ -112,20 +109,20 @@ namespace Masters2026Nax.Hardware
         /// <summary>
         /// Sets the output level of the AUD-IO.
         /// </summary>
-        public void OutputLevel(uint zone, ushort level)
+        public void OutputLevel(uint Output, ushort level)
         {
-            myNaxIo.Zones[zone].Volume.UShortValue = level;
+            myNaxIo.Zones[1].Volume.UShortValue = level;
         }
 
         /// <summary>
         /// Mutes or unmutes the output of the AUD-IO.
         /// </summary>
-        public void OutputMute(uint zone, bool muted)
+        public void OutputMute(uint Output, bool muted)
         {
             if (muted)
-                myNaxIo.Zones[zone].MuteOn();
+                myNaxIo.Zones[1].MuteOn();
             else
-                myNaxIo.Zones[zone].MuteOff();
+                myNaxIo.Zones[1].MuteOff();
         }
 
         /// <summary>

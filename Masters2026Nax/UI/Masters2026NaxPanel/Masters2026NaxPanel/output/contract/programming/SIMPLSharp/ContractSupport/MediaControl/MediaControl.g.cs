@@ -34,6 +34,11 @@ namespace Masters2026NaxPanel.MediaControl
         object UserObject { get; set; }
 
         /// <summary>
+        /// Event ReturnBtn.Press (from panel to Control System)
+        /// </summary>
+        event EventHandler<UIEventArgs> ReturnBtn_PressEvent;
+
+        /// <summary>
         /// MediaControl.VisibilityJoin Feedback
         /// </summary>
         /// <param name="digital">The bool to update the panel.</param>
@@ -44,6 +49,18 @@ namespace Masters2026NaxPanel.MediaControl
         /// </summary>
         /// <param name="callback">The bool delegate to update the panel.</param>
         void VisibilityJoin(MediaControlBoolInputSigDelegate callback);
+
+        /// <summary>
+        /// ReturnBtn.Selected Feedback
+        /// </summary>
+        /// <param name="digital">The bool to update the panel.</param>
+        void ReturnBtn_Selected(bool digital);
+
+        /// <summary>
+        /// ReturnBtn.Selected Feedback
+        /// </summary>
+        /// <param name="callback">The bool delegate to update the panel.</param>
+        void ReturnBtn_Selected(MediaControlBoolInputSigDelegate callback);
 
         /// <summary>
         /// ComplexComponent Media Player
@@ -92,12 +109,24 @@ namespace Masters2026NaxPanel.MediaControl
             /// </summary>
             internal static class Booleans
             {
+                /// <summary>
+                /// Output or Event digital joinInfo from panel to Control System: MediaControl.ReturnBtn.Press
+                /// ReturnBtn.Press
+                /// </summary>
+                public const uint ReturnBtn_PressEvent = 2;
+
 
                 /// <summary>
                 /// Input or Feedback digital joinInfo from Control System to panel: MediaControlVisibilityJoin
                 /// MediaControl.VisibilityJoin
                 /// </summary>
                 public const uint VisibilityJoinState = 1;
+
+                /// <summary>
+                /// Input or Feedback digital joinInfo from Control System to panel: MediaControl.ReturnBtn.Selected
+                /// ReturnBtn.Selected
+                /// </summary>
+                public const uint ReturnBtn_SelectedState = 3;
 
             }
         }
@@ -149,6 +178,7 @@ namespace Masters2026NaxPanel.MediaControl
  
             _devices = new List<BasicTriListWithSmartObject>(); 
  
+            ComponentMediator.ConfigureBooleanEvent(controlJoinId, Joins.Booleans.ReturnBtn_PressEvent, onReturnBtn_Press);
             MediaPlayer = new Masters2026NaxPanel.MediaControl.MediaPlayer(ComponentMediator, 3);
         }
 
@@ -171,6 +201,15 @@ namespace Masters2026NaxPanel.MediaControl
         #endregion
 
         #region CH5 Contract
+
+        /// <inheritdoc/>
+        public event EventHandler<UIEventArgs> ReturnBtn_PressEvent;
+        private void onReturnBtn_Press(SmartObjectEventArgs eventArgs)
+        {
+            EventHandler<UIEventArgs> handler = ReturnBtn_PressEvent;
+            if (handler != null)
+                handler(this, UIEventArgs.CreateEventArgs(eventArgs));
+        }
         /// <inheritdoc/>
         public void VisibilityJoin(MediaControlBoolInputSigDelegate callback)
         {
@@ -184,6 +223,20 @@ namespace Masters2026NaxPanel.MediaControl
         public void VisibilityJoin(bool digital)
         {
             VisibilityJoin((sig, component) => sig.BoolValue = digital);
+        }
+        /// <inheritdoc/>
+        public void ReturnBtn_Selected(MediaControlBoolInputSigDelegate callback)
+        {
+            for (int index = 0; index < Devices.Count; index++)
+            {
+                callback(Devices[index].SmartObjects[ControlJoinId].BooleanInput[Joins.Booleans.ReturnBtn_SelectedState], this);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void ReturnBtn_Selected(bool digital)
+        {
+            ReturnBtn_Selected((sig, component) => sig.BoolValue = digital);
         }
 
         /// <summary>
@@ -218,6 +271,7 @@ namespace Masters2026NaxPanel.MediaControl
 
             IsDisposed = true;
 
+            ReturnBtn_PressEvent = null;
         }
 
         #endregion

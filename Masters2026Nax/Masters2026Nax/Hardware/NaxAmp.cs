@@ -90,6 +90,20 @@ namespace Masters2026Nax.Hardware
         // Public Hardware Methods
         // #########################################################################
 
+        public void Volume(uint zone, ushort volume)
+        {
+            myNaxAmp.Zones[zone].Volume.UShortValue = volume;
+        }
+
+        public void Mute(uint zone, bool muteOn)
+        {
+            if(muteOn)
+                myNaxAmp.Zones[zone].MuteOn();
+            else
+                myNaxAmp.Zones[zone].MuteOff();
+        }
+
+
         /// <summary>
         /// Returns the current AES67 Session Name being received by a zone.
         /// </summary>

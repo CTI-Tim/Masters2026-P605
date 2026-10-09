@@ -26,6 +26,10 @@ namespace Masters2026Nax.Hardware
         //      2   Bluetooth Input
         //      3   AES67 Stream
         //
+        //  NOTE:  Bluetooth Input disappears when in Transmit mode
+        //         MEaning the AES67 stream moves to input 2  
+        //         This will cause confusion if you swap modes.
+        //
         // OUTPUT ZONES
         //      Zones[1]    LineOut
         //      Zones[2]    BTOut
@@ -62,20 +66,16 @@ namespace Masters2026Nax.Hardware
             myNaxBtIo.Routing.Zones[2].UShortValue = 3; //Aes67stream
             myNaxBtIo.Routing.Zones[1].UShortValue = 3;
             myNaxBtIo.Nax.Rx[2].AutomaticInitiationEnable();
-            //clear on startup
-            //myNaxBtIo.Nax.Rx[1].SessionName.StringValue = ""; //LineOut
-            //myNaxBtIo.Nax.Rx[2].SessionName.StringValue = ""; //Bluetooth Out
+            // Be careful trying to setup things here on startup
+            // They will not run because the device has not actually became ready yet.
         }
 
         /// <summary>
-        /// Routes a source to one of the two Residential output zones.
-        /// Output 1 is LineOut and Output 2 is BTOut.
-        /// Input 0 = No Source
-        /// Input 1 = Analog Input
-        /// Input 2 = Bluetooth Input
-        /// Input 3 = AES67 Stream
+        /// Routes one of the available BTIO sources to one of the two Residential output zones.
         /// </summary>
-        public void Route(uint Output, ushort Input)
+        /// <param name="Output">Output zone to route. 1 = LineOut, 2 = Bluetooth Out.</param>
+        /// <param name="Input">Source to route. 0 = Off, 1 = Analog, 2 = Bluetooth, 3 = AES67.</param>
+        public void RouteAudio(uint Output, ushort Input)
         {
             // Notice that I am only checking the upper bound here and not the lower for Input.
             // Some of you already know why, some may not. It is because of the data type.
@@ -88,7 +88,7 @@ namespace Masters2026Nax.Hardware
             if (Output > 0 && Output <= 2 && Input <= 3)
                 myNaxBtIo.Routing.Zones[Output].UShortValue = Input;
         }
-        public void OutputLevel(uint Output, ushort Level)
+        public void Volume(uint Output, ushort Level)
         {
             if (Output > 0 && Output <= 2)
                 myNaxBtIo.Zones[Output].Volume.UShortValue = Level;
@@ -104,10 +104,15 @@ namespace Masters2026Nax.Hardware
             }
         }
 
-        public void SetRxStream(uint stream, string session)
+        public void SetStream(string streamName)
         {
-            
-            myNaxBtIo.Nax.Rx[stream].SessionName.StringValue = session;
+            // We currently use SessionName instead of MulticastAddress because setting
+            // MulticastAddress directly does not work correctly with the NAX library.
+            //
+            // This method assumes we have already seen feedback from the device and
+            // therefore know the physical device is actually ready for commands.
+            // On the BTIO the stream is at Source 2 when in BT transmitter mode.
+            myNaxBtIo.Nax.Rx[2].SessionName.StringValue = streamName;
         }
 
         /// <summary>
@@ -212,8 +217,8 @@ namespace Masters2026Nax.Hardware
         public class DeviceFeedbackEventArgs : EventArgs
         {
             public uint Output { get; private set; }
-            public ushort Source { get; private set; }
-            public ushort Level { get; private set; }
+            public ushort SourceFb { get; private set; }
+            public ushort VolumeFb { get; private set; }
             public bool Muted { get; private set; }
             public bool BtRx { get; private set; }
             public string Information { get; private set; }
@@ -227,8 +232,8 @@ namespace Masters2026Nax.Hardware
                 bool muted, bool btrx, string information)
             {
                 Output = output;
-                Source = source;
-                Level = level;
+                SourceFb = source;
+                VolumeFb = level;
                 Muted = muted;
                 BtRx = btrx;
                 Information = information;

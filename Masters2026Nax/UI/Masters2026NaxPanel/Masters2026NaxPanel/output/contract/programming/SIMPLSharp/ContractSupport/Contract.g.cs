@@ -54,9 +54,6 @@ namespace Masters2026NaxPanel
         public Masters2026NaxPanel.MediaControl.IMediaControl MediaControl { get { return (Masters2026NaxPanel.MediaControl.IMediaControl)InternalMediaControl; } }
         private Masters2026NaxPanel.MediaControl.MediaControl InternalMediaControl { get; set; }
 
-        public Masters2026NaxPanel.ISideBar SideBar { get { return (Masters2026NaxPanel.ISideBar)InternalSideBar; } }
-        private Masters2026NaxPanel.SideBar InternalSideBar { get; set; }
-
         #endregion
 
         #region Construction and Initialization
@@ -82,8 +79,6 @@ namespace Masters2026NaxPanel
             InternalMain = new Masters2026NaxPanel.Main.Main(ComponentMediator, 1);
 
             InternalMediaControl = new Masters2026NaxPanel.MediaControl.MediaControl(ComponentMediator, 2);
-
-            InternalSideBar = new Masters2026NaxPanel.SideBar(ComponentMediator, 4);
 
 
             for (int index = 0; index < devices.Length; index++)
@@ -112,7 +107,6 @@ namespace Masters2026NaxPanel
         {
             InternalMain.AddDevice(device);
             InternalMediaControl.AddDevice(device);
-            InternalSideBar.AddDevice(device);
 
         }
 
@@ -120,7 +114,6 @@ namespace Masters2026NaxPanel
         {
             InternalMain.RemoveDevice(device);
             InternalMediaControl.RemoveDevice(device);
-            InternalSideBar.RemoveDevice(device);
         }
 
         #endregion
@@ -138,7 +131,6 @@ namespace Masters2026NaxPanel
 
             InternalMain.Dispose();
             InternalMediaControl.Dispose();
-            InternalSideBar.Dispose();
 
             ComponentMediator.Dispose(); 
         }

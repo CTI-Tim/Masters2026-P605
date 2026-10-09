@@ -34,6 +34,21 @@ namespace Masters2026NaxPanel.Main
         object UserObject { get; set; }
 
         /// <summary>
+        /// Event Output1Volume.Lower Touch (from panel to Control System)
+        /// </summary>
+        event EventHandler<UIEventArgs> Output1Volume_LowerTouchEvent;
+
+        /// <summary>
+        /// Event Output2Volume.Lower Touch (from panel to Control System)
+        /// </summary>
+        event EventHandler<UIEventArgs> Output2Volume_LowerTouchEvent;
+
+        /// <summary>
+        /// Event Output3Volume.Lower Touch (from panel to Control System)
+        /// </summary>
+        event EventHandler<UIEventArgs> Output3Volume_LowerTouchEvent;
+
+        /// <summary>
         /// Main.VisibilityJoin Feedback
         /// </summary>
         /// <param name="digital">The bool to update the panel.</param>
@@ -44,6 +59,60 @@ namespace Masters2026NaxPanel.Main
         /// </summary>
         /// <param name="callback">The bool delegate to update the panel.</param>
         void VisibilityJoin(MainBoolInputSigDelegate callback);
+
+        /// <summary>
+        /// Output1Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="analog">The short analog to update the panel.</param>
+        void Output1Volume_LowerTouchfb(short analog);
+
+        /// <summary>
+        /// Output1Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="analog">The ushort analog to update the panel.</param>
+        void Output1Volume_LowerTouchfb(ushort analog);
+
+        /// <summary>
+        /// Output1Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="callback">The ushort delegate to update the panel.</param>
+        void Output1Volume_LowerTouchfb(MainUShortInputSigDelegate callback);
+
+        /// <summary>
+        /// Output2Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="analog">The short analog to update the panel.</param>
+        void Output2Volume_LowerTouchfb(short analog);
+
+        /// <summary>
+        /// Output2Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="analog">The ushort analog to update the panel.</param>
+        void Output2Volume_LowerTouchfb(ushort analog);
+
+        /// <summary>
+        /// Output2Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="callback">The ushort delegate to update the panel.</param>
+        void Output2Volume_LowerTouchfb(MainUShortInputSigDelegate callback);
+
+        /// <summary>
+        /// Output3Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="analog">The short analog to update the panel.</param>
+        void Output3Volume_LowerTouchfb(short analog);
+
+        /// <summary>
+        /// Output3Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="analog">The ushort analog to update the panel.</param>
+        void Output3Volume_LowerTouchfb(ushort analog);
+
+        /// <summary>
+        /// Output3Volume.Lower Touch fb Feedback
+        /// </summary>
+        /// <param name="callback">The ushort delegate to update the panel.</param>
+        void Output3Volume_LowerTouchfb(MainUShortInputSigDelegate callback);
 
         /// <summary>
         /// Output1Label.Indirect Feedback
@@ -118,6 +187,12 @@ namespace Masters2026NaxPanel.Main
     /// <summary>
     /// Digital callback used in feedback events.
     /// </summary>
+    /// <param name="uShortInputSig">The <see cref="UShortInputSig"/> joinInfo data.</param>
+    /// <param name="main">The <see cref="IMain"/> on which to apply the feedback.</param>
+    public delegate void MainUShortInputSigDelegate(UShortInputSig uShortInputSig, IMain main);
+    /// <summary>
+    /// Digital callback used in feedback events.
+    /// </summary>
     /// <param name="stringInputSig">The <see cref="StringInputSig"/> joinInfo data.</param>
     /// <param name="main">The <see cref="IMain"/> on which to apply the feedback.</param>
     public delegate void MainStringInputSigDelegate(StringInputSig stringInputSig, IMain main);
@@ -162,6 +237,49 @@ namespace Masters2026NaxPanel.Main
                 /// Main.VisibilityJoin
                 /// </summary>
                 public const uint VisibilityJoinState = 1;
+
+            }
+            /// <summary>
+            /// Analog signals.
+            /// </summary>
+            internal static class Numerics
+            {
+                /// <summary>
+                /// Output or Event analog joinInfo from panel to Control System: Main.Output1Volume.LowerTouch
+                /// Output1Volume.Lower Touch
+                /// </summary>
+                public const uint Output1Volume_LowerTouchEvent = 4;
+
+                /// <summary>
+                /// Output or Event analog joinInfo from panel to Control System: Main.Output2Volume.LowerTouch
+                /// Output2Volume.Lower Touch
+                /// </summary>
+                public const uint Output2Volume_LowerTouchEvent = 5;
+
+                /// <summary>
+                /// Output or Event analog joinInfo from panel to Control System: Main.Output3Volume.LowerTouch
+                /// Output3Volume.Lower Touch
+                /// </summary>
+                public const uint Output3Volume_LowerTouchEvent = 6;
+
+
+                /// <summary>
+                /// Input or Feedback analog joinInfo from Control System to panel: Main.Output1Volume.LowerTouchfb
+                /// Output1Volume.Lower Touch fb
+                /// </summary>
+                public const uint Output1Volume_LowerTouchfbState = 4;
+
+                /// <summary>
+                /// Input or Feedback analog joinInfo from Control System to panel: Main.Output2Volume.LowerTouchfb
+                /// Output2Volume.Lower Touch fb
+                /// </summary>
+                public const uint Output2Volume_LowerTouchfbState = 5;
+
+                /// <summary>
+                /// Input or Feedback analog joinInfo from Control System to panel: Main.Output3Volume.LowerTouchfb
+                /// Output3Volume.Lower Touch fb
+                /// </summary>
+                public const uint Output3Volume_LowerTouchfbState = 6;
 
             }
             /// <summary>
@@ -240,6 +358,9 @@ namespace Masters2026NaxPanel.Main
  
             _devices = new List<BasicTriListWithSmartObject>(); 
  
+            ComponentMediator.ConfigureNumericEvent(controlJoinId, Joins.Numerics.Output1Volume_LowerTouchEvent, onOutput1Volume_LowerTouch);
+            ComponentMediator.ConfigureNumericEvent(controlJoinId, Joins.Numerics.Output2Volume_LowerTouchEvent, onOutput2Volume_LowerTouch);
+            ComponentMediator.ConfigureNumericEvent(controlJoinId, Joins.Numerics.Output3Volume_LowerTouchEvent, onOutput3Volume_LowerTouch);
             Output3SourceSel = new Masters2026NaxPanel.Main.Output3SourceSel(ComponentMediator, 5);
             Output2SourceSel = new Masters2026NaxPanel.Main.Output2SourceSel(ComponentMediator, 6);
             Output1SourceSel = new Masters2026NaxPanel.Main.Output1SourceSel(ComponentMediator, 7);
@@ -272,6 +393,33 @@ namespace Masters2026NaxPanel.Main
         #endregion
 
         #region CH5 Contract
+
+        /// <inheritdoc/>
+        public event EventHandler<UIEventArgs> Output1Volume_LowerTouchEvent;
+        private void onOutput1Volume_LowerTouch(SmartObjectEventArgs eventArgs)
+        {
+            EventHandler<UIEventArgs> handler = Output1Volume_LowerTouchEvent;
+            if (handler != null)
+                handler(this, UIEventArgs.CreateEventArgs(eventArgs));
+        }
+
+        /// <inheritdoc/>
+        public event EventHandler<UIEventArgs> Output2Volume_LowerTouchEvent;
+        private void onOutput2Volume_LowerTouch(SmartObjectEventArgs eventArgs)
+        {
+            EventHandler<UIEventArgs> handler = Output2Volume_LowerTouchEvent;
+            if (handler != null)
+                handler(this, UIEventArgs.CreateEventArgs(eventArgs));
+        }
+
+        /// <inheritdoc/>
+        public event EventHandler<UIEventArgs> Output3Volume_LowerTouchEvent;
+        private void onOutput3Volume_LowerTouch(SmartObjectEventArgs eventArgs)
+        {
+            EventHandler<UIEventArgs> handler = Output3Volume_LowerTouchEvent;
+            if (handler != null)
+                handler(this, UIEventArgs.CreateEventArgs(eventArgs));
+        }
         /// <inheritdoc/>
         public void VisibilityJoin(MainBoolInputSigDelegate callback)
         {
@@ -287,6 +435,66 @@ namespace Masters2026NaxPanel.Main
             VisibilityJoin((sig, component) => sig.BoolValue = digital);
         }
 
+        /// <inheritdoc/>
+        public void Output1Volume_LowerTouchfb(MainUShortInputSigDelegate callback)
+        {
+            for (int index = 0; index < Devices.Count; index++)
+            {
+                callback(Devices[index].SmartObjects[ControlJoinId].UShortInput[Joins.Numerics.Output1Volume_LowerTouchfbState], this);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void Output1Volume_LowerTouchfb(ushort analog)
+        {
+            Output1Volume_LowerTouchfb((sig, component) => sig.UShortValue = analog);
+        }
+
+        /// <inheritdoc/>
+        public void Output1Volume_LowerTouchfb(short analog)
+        {
+            Output1Volume_LowerTouchfb((sig, component) => sig.ShortValue = analog);
+        }
+        /// <inheritdoc/>
+        public void Output2Volume_LowerTouchfb(MainUShortInputSigDelegate callback)
+        {
+            for (int index = 0; index < Devices.Count; index++)
+            {
+                callback(Devices[index].SmartObjects[ControlJoinId].UShortInput[Joins.Numerics.Output2Volume_LowerTouchfbState], this);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void Output2Volume_LowerTouchfb(ushort analog)
+        {
+            Output2Volume_LowerTouchfb((sig, component) => sig.UShortValue = analog);
+        }
+
+        /// <inheritdoc/>
+        public void Output2Volume_LowerTouchfb(short analog)
+        {
+            Output2Volume_LowerTouchfb((sig, component) => sig.ShortValue = analog);
+        }
+        /// <inheritdoc/>
+        public void Output3Volume_LowerTouchfb(MainUShortInputSigDelegate callback)
+        {
+            for (int index = 0; index < Devices.Count; index++)
+            {
+                callback(Devices[index].SmartObjects[ControlJoinId].UShortInput[Joins.Numerics.Output3Volume_LowerTouchfbState], this);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void Output3Volume_LowerTouchfb(ushort analog)
+        {
+            Output3Volume_LowerTouchfb((sig, component) => sig.UShortValue = analog);
+        }
+
+        /// <inheritdoc/>
+        public void Output3Volume_LowerTouchfb(short analog)
+        {
+            Output3Volume_LowerTouchfb((sig, component) => sig.ShortValue = analog);
+        }
 
         /// <inheritdoc/>
         public void Output1Label_Indirect(MainStringInputSigDelegate callback)
@@ -387,6 +595,9 @@ namespace Masters2026NaxPanel.Main
 
             IsDisposed = true;
 
+            Output1Volume_LowerTouchEvent = null;
+            Output2Volume_LowerTouchEvent = null;
+            Output3Volume_LowerTouchEvent = null;
         }
 
         #endregion

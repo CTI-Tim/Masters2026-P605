@@ -1,5 +1,6 @@
 ﻿using Crestron.SimplSharp;
 using CwsDebug;
+//using Masters2026;
 using Masters2026Nax.Configuration;
 using MessageBroker;
 using System;
@@ -41,17 +42,18 @@ namespace Masters2026Nax.Hardware
     /// </summary>
     public class HardwareSetup
     {
+        
         private NaxAmp myNaxamp;
         private NaxBluetooth myBtIo;
-        private NaxIO myIo;
+        //private NaxIO myIo;
 
         public HardwareSetup(ControlSystem cs)
         {
+
             // ---------------------------------------------------------------------
             // NAX Amplifier
             // ---------------------------------------------------------------------
             myNaxamp = new NaxAmp(0x10, cs);
-
             myNaxamp.ZoneFeedbackChanged += MyNaxamp_ZoneFeedbackChanged;
             myNaxamp.CrpcMessageReceived += MyNaxamp_CrpcMessageReceived;
 
@@ -59,28 +61,64 @@ namespace Masters2026Nax.Hardware
             Broker.AddDelegate("Zone2Source", Zone2SourceSelect);
             Broker.AddDelegate("UiMediaPlayerCrpcMessage", CrpcIncoming);
 
-            // ---------------------------------------------------------------------
+            // -------------------------------------------------------------------
             // NAX BTIO
-            // ---------------------------------------------------------------------
+            // -------------------------------------------------------------------
             myBtIo = new NaxBluetooth(0x11, cs);
-
             myBtIo.DeviceFeedbackChanged += MyBtIo_DeviceFeedbackChanged;
 
-            // ---------------------------------------------------------------------
-            // NAX AUD-IO
-            // ---------------------------------------------------------------------
-            myIo = new NaxIO(0x13, cs);
-
-            myIo.DeviceFeedbackChanged += MyIo_DeviceFeedbackChanged;
-
             Broker.AddDelegate("Zone3Source", Zone3SourceSelect);
+            // --------------------------------------------------------------------
+            // NAX AUD-IO
+            // --------------------------------------------------------------------
+            //myIo = new NaxIO(0x13, cs);
+
+            //myIo.DeviceFeedbackChanged += MyIo_DeviceFeedbackChanged;
+
+            // ---------------------------------------------------------------------
+            // VOLUME EVENTS
+            // ---------------------------------------------------------------------
+            Broker.AddDelegate("Zone1Volume", Zone1VolumeSet);
+            Broker.AddDelegate("Zone2Volume", Zone2VolumeSet);
+            Broker.AddDelegate("Zone3Volume", Zone3VolumeSet);
+
+        }
+            // ---------------------------------------------------------------------
+            // VOLUME Helper Methods
+            // ---------------------------------------------------------------------
+        public void Zone1VolumeSet(Message m)
+        {
+        myNaxamp.Volume(1, m.Analog);
+        }
+        public void Zone2VolumeSet(Message m)
+        {
+            myNaxamp.Volume(2, m.Analog);
+        }
+        public void Zone3VolumeSet(Message m)
+        {
+            myBtIo.Volume(1, m.Analog);
         }
 
 
-        // #########################################################################
-        // NAX Amplifier Commands
-        // #########################################################################
 
+
+
+        // -----------------------------------------------------------------
+        // NAX Amplifier Commands
+        // -----------------------------------------------------------------
+
+        public void Zone1Volume(ushort volume)
+        {
+            myNaxamp.Volume(1, volume);
+        }
+        public void Zone2Volume(ushort volume)
+        {
+            myNaxamp.Volume(2, volume);
+        }
+        public void BtVolume(ushort volume)
+        {
+            myBtIo.Volume(1, volume);
+        }
         public void Zone1SourceSelect(Message m)
         {
             var source = NaxSourceConfiguration.GetSourceNumber(1, m.Analog);
@@ -110,9 +148,9 @@ namespace Masters2026Nax.Hardware
         }
 
 
-        // #########################################################################
+        // ------------------------------------------------------------------
         // NAX Amplifier Feedback
-        // #########################################################################
+        // ------------------------------------------------------------------
 
         // This is intentionally clear rather than clever. Every time the amplifier
         // reports source feedback we translate that hardware feedback back into the
@@ -135,57 +173,30 @@ namespace Masters2026Nax.Hardware
                 $"Zone{e.ZoneNumber}SourceFb",
                 new Message { Analog = buttonIndex });
 
+            Broker.SendMessage($"Zone{e.ZoneNumber}VolumeFb",
+                new Message { Analog = e.VolumeFb });
+
             CwsDebugPage.LogNotice(
-                $"Source Select Zone {e.ZoneNumber} feedback was {e.SourceFb} was set to {buttonIndex}");
+                $"Source Select Zone {e.ZoneNumber} feedback was {e.SourceFb} was set to {buttonIndex} Volume = {e.VolumeFb}");
         }
 
 
-        // #########################################################################
-        // NAX AUD-IO Commands
-        // #########################################################################
+        // --------------------------------------------------------------
+        // NAX AUD-BTIO Commands
+        // --------------------------------------------------------------
 
         public void Zone3SourceSelect(Message m)
         {
             var source = NaxSourceConfiguration.GetSourceNumber(3, m.Analog);
 
-            myIo.RouteAudio(1, source);
+            myBtIo.RouteAudio(2, source);  // On the BTIO BTOut is out 2 if in transmitter mode
 
             if (NaxSourceConfiguration.IsStreamSource(3, m.Analog))
             {
-                myIo.SetStream(
+                myBtIo.SetStream(
                     NaxSourceConfiguration.GetSessionName(3, m.Analog));
             }
         }
-
-
-        // #########################################################################
-        // NAX AUD-IO Feedback
-        // #########################################################################
-
-        private void MyIo_DeviceFeedbackChanged(
-            object? sender,
-            NaxIO.DeviceFeedbackEventArgs e)
-        {
-            // The AUD-IO tells us its routing source number, but that does not always
-            // tell us which button should be selected. Several AES67 sources can all
-            // use the same routing number and are identified by Session Name instead.
-            //
-            // The source configuration translates the hardware feedback back into the
-            // same button index that was originally used to select the source.
-            var buttonIndex =
-                NaxSourceConfiguration.GetButtonIndexFromFeedback(
-                    3,
-                    e.SourceFb,
-                    myIo.GetSessionFb(1));
-
-            // HardwareSetup does not care who is listening to this feedback. It simply
-            // reports the current Zone 3 source index to the broker. In this program
-            // the UI is listening and uses that index to update its button feedback.
-            Broker.SendMessage(
-                "Zone3SourceFb",
-                new Message { Analog = buttonIndex });
-        }
-
 
         // #########################################################################
         // NAX BTIO Feedback
@@ -195,9 +206,20 @@ namespace Masters2026Nax.Hardware
             object? sender,
             NaxBluetooth.DeviceFeedbackEventArgs e)
         {
-            CwsDebugPage.LogNotice(
-                $"BTIO sent out={e.Output} src={e.Source} mute={e.Muted} " +
-                $"vol={e.Level} event={e.Information} bt={e.BtRx}");
+            var buttonIndex =
+                NaxSourceConfiguration.GetButtonIndexFromFeedback(
+                    3,
+                    e.SourceFb,
+                    myBtIo.GetSessionFb(2));
+            CwsDebugPage.LogInfo($"BTIOFB = {e.SourceFb} and {myBtIo.GetSessionFb(2)} volume = {e.VolumeFb} output={e.Output}");
+            // HardwareSetup does not care who is listening to this feedback. It simply
+            // reports the current Zone 3 source index to the broker. In this program
+            // the UI is listening and uses that index to update its button feedback.
+            Broker.SendMessage("Zone3SourceFb",
+                    new Message { Analog = buttonIndex });
+            Broker.SendMessage($"Zone3VolumeFb",
+                    new Message { Analog = e.VolumeFb });
+            
         }
 
 

@@ -4,6 +4,7 @@
 using Crestron.AutoUpdateApiCommon;  // Required by the generated contract.g.cs
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
+using Crestron.SimplSharpPro.AudioDistribution;
 using Crestron.SimplSharpPro.UI;
 using CwsDebug;
 using Masters2026Nax.Configuration;
@@ -32,6 +33,8 @@ namespace Masters2026Nax
     {
         private XpanelForHtml5 myXpanel;
         private Contract myContract;
+
+        private ushort lastSourceTouched = 0;
 
 
         // #########################################################################
@@ -75,30 +78,17 @@ namespace Masters2026Nax
             // the event.
             // ---------------------------------------------------------------------
 
-            myContract.Main.Output1SourceSel.Button_PressEvent +=
-                Source1Select_Button_PressEvent;
-
-            myContract.Main.Output2SourceSel.Button_PressEvent +=
-                Source2Select_Button_PressEvent;
-
-            myContract.Main.Output3SourceSel.Button_PressEvent +=
-                Source3Select_Button_PressEvent;
-
+            myContract.Main.Output1SourceSel.Button_PressEvent += Source1Select_Button_PressEvent;
+            myContract.Main.Output2SourceSel.Button_PressEvent += Source2Select_Button_PressEvent;
+            myContract.Main.Output3SourceSel.Button_PressEvent += Source3Select_Button_PressEvent;
 
             // Volume controls
-            myContract.SideBar.VolumeDnBtn_PressEvent +=
-                MainPage_VolumeDnBtn_PressEvent;
-
-            myContract.SideBar.VolumeUpBtn_PressEvent +=
-                MainPage_VolumeUpBtn_PressEvent;
-
-            myContract.SideBar.ReturnBtn_PressEvent +=
-                SideBar_ReturnBtn_PressEvent;
-
+            myContract.Main.Output1Volume_LowerTouchEvent += Main_Output1Volume_LowerTouchEvent;
+            myContract.Main.Output2Volume_LowerTouchEvent += Main_Output2Volume_LowerTouchEvent;
+            myContract.Main.Output3Volume_LowerTouchEvent += Main_Output3Volume_LowerTouchEvent;
 
             // Media Player CRPC
-            myContract.MediaControl.MediaPlayer.MediaPlayer_CRPCEvent +=
-                MediaPlayer_MediaPlayer_CRPCEvent;
+            myContract.MediaControl.MediaPlayer.MediaPlayer_CRPCEvent += MediaPlayer_MediaPlayer_CRPCEvent;
 
 
             // ---------------------------------------------------------------------
@@ -108,10 +98,11 @@ namespace Masters2026Nax
             Broker.AddDelegate("Zone1SourceFb", Zone1SetSourceFb);
             Broker.AddDelegate("Zone2SourceFb", Zone2SetSourceFb);
             Broker.AddDelegate("Zone3SourceFb", Zone3SetSourceFb);
+            Broker.AddDelegate("Zone1VolumeFb", Zone1SetVolumeFb);
+            Broker.AddDelegate("Zone2VolumeFb", Zone2SetVolumeFb);
+            Broker.AddDelegate("Zone3VolumeFb", Zone3SetVolumeFb);
 
-            Broker.AddDelegate(
-                "MediaPlayerCrpcFb",
-                MediaPlayerObjectPlayerFb);
+            Broker.AddDelegate("MediaPlayerCrpcFb", MediaPlayerObjectPlayerFb);
 
 
             // ---------------------------------------------------------------------
@@ -150,44 +141,13 @@ namespace Masters2026Nax
             }
         }
 
-
-        // #########################################################################
+        // -------------------------------------------------------------------------
         // UI Event Handlers
         //
         // These methods tell the application what the user did. They do not directly
         // control any NAX hardware. That job belongs on the other side of the Message
         // Broker.
-        // #########################################################################
-
-        private void MainPage_VolumeMuteBtn_PressEvent(
-            object sender,
-            UIEventArgs e)
-        {
-            Broker.SendMessage(
-                "VolumeMute",
-                new Message { Digital = e.SigArgs.Sig.BoolValue });
-        }
-
-
-        private void MainPage_VolumeDnBtn_PressEvent(
-            object sender,
-            UIEventArgs e)
-        {
-            Broker.SendMessage(
-                "VolumeDown",
-                new Message { Digital = e.SigArgs.Sig.BoolValue });
-        }
-
-
-        private void MainPage_VolumeUpBtn_PressEvent(
-            object sender,
-            UIEventArgs e)
-        {
-            Broker.SendMessage(
-                "VolumeUp",
-                new Message { Digital = e.SigArgs.Sig.BoolValue });
-        }
-
+        // -------------------------------------------------------------------------
 
         // Crestron Contracts are tightly coupled to the generated Contract objects.
         // Each SourceSelect object exposes its own Button_PressEvent, so we still
@@ -235,14 +195,25 @@ namespace Masters2026Nax
                 (ushort)source);
         }
 
-
-        private void SideBar_ReturnBtn_PressEvent(
-            object sender,
-            UIEventArgs e)
+        // Volume
+        private void Main_Output1Volume_LowerTouchEvent(object sender, UIEventArgs e)
         {
-            myContract.SideBar.ReturnBtn_Visibility_fb(false);
+            VolumeSend(1, e.SigArgs.Sig.UShortValue);
         }
-
+        private void Main_Output2Volume_LowerTouchEvent(object sender, UIEventArgs e)
+        {
+            VolumeSend(2, e.SigArgs.Sig.UShortValue);
+        }
+        private void Main_Output3Volume_LowerTouchEvent(object sender, UIEventArgs e)
+        {
+            VolumeSend(3, e.SigArgs.Sig.UShortValue);
+        }
+        private void VolumeSend(uint zone, ushort level)
+        {
+            Broker.SendMessage(
+                $"Zone{zone}Volume",
+                new Message { Analog = level });
+        }
 
         // #########################################################################
         // Panel Online / Offline
@@ -277,26 +248,26 @@ namespace Masters2026Nax
         // it does not need to understand how any of the NAX hardware actually works.
         // #########################################################################
 
+        // Yes, we're brute force clearing every button first. There are only a
+        // handful of buttons, so this is simple, easy to understand, and
+        // guarantees that only one button remains selected.
+        //
+        // Could we write more code to make this infinitely expandable? Sure.
+        // Do we need to? No.
+        //
+        // These three methods also look very similar. Normally that would make
+        // me want to combine them, but the generated Contract gives us three
+        // different button-list objects. Sometimes tightly coupled generated
+        // code is unavoidable and the simple duplicate methods are easier to understand.
+        // The problem is that these objects come from the Construct generated Contract.
+        // Even though Output1SourceSel, Output2SourceSel, and Output3SourceSel may expose
+        // exactly the same methods, Construct may generate them as different C# types.
+        // Do not add interfaces, dynamic, reflection, or other clever code just to eliminate
+        // a few repeated lines. Refactoring code that is based on generated code
+        // like these contracts rarely pays off and only causes lost time.
+
         private void Zone1SetSourceFb(Message m)
         {
-            // Yes, we're brute force clearing every button first. There are only a
-            // handful of buttons, so this is simple, easy to understand, and
-            // guarantees that only one button remains selected.
-            //
-            // Could we write more code to make this infinitely expandable? Sure.
-            // Do we need to? No.
-            //
-            // These three methods also look very similar. Normally that would make
-            // me want to combine them, but the generated Contract gives us three
-            // different button-list objects. Sometimes tightly coupled generated
-            // code wins and the simple duplicate methods are easier to understand.
-            // The problem is that these objects come from the Construct generated Contract.
-            // Even though Output1SourceSel, Output2SourceSel, and Output3SourceSel may expose
-            // exactly the same methods, Construct may generate them as different C# types.
-            // Do not add interfaces, dynamic, reflection, or other clever code just to eliminate
-            // a few repeated lines. Refactoring code that is based on generated code
-            // like these contracts rarely pays off and only causes lost time.
-
             for (ushort i = 0;
                 i < NaxSourceConfiguration.GetSourceCount(1);
                 i++)
@@ -308,8 +279,6 @@ namespace Masters2026Nax
                 m.Analog,
                 true);
         }
-
-
         private void Zone2SetSourceFb(Message m)
         {
             for (ushort i = 0;
@@ -323,8 +292,6 @@ namespace Masters2026Nax
                 m.Analog,
                 true);
         }
-
-
         private void Zone3SetSourceFb(Message m)
         {
             for (ushort i = 0;
@@ -338,7 +305,21 @@ namespace Masters2026Nax
                 m.Analog,
                 true);
         }
-
+        // #########################################################################
+        // Volumes  
+        // #########################################################################
+        private void Zone1SetVolumeFb(Message m)
+        {
+            myContract.Main.Output1Volume_LowerTouchfb(m.Analog); 
+        }
+        private void Zone2SetVolumeFb(Message m)
+        {
+            myContract.Main.Output2Volume_LowerTouchfb(m.Analog);
+        }
+        private void Zone3SetVolumeFb(Message m)
+        {
+            myContract.Main.Output3Volume_LowerTouchfb(m.Analog);
+        }
 
         // #########################################################################
         // Media Player and CRPC
@@ -356,8 +337,6 @@ namespace Masters2026Nax
                 // Media Player controls and make the Return button available.
                 myContract.MediaControl.VisibilityJoin(true);
                 myContract.MediaControl.VisibilityJoin(false);
-
-                myContract.SideBar.ReturnBtn_Visibility_fb(true);
 
                 ConnectCrpc();
             }

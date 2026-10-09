@@ -39,14 +39,9 @@ namespace Masters2026NaxPanel
         event EventHandler<UIEventArgs> ReturnBtn_PressEvent;
 
         /// <summary>
-        /// Event VolumeDnBtn.Press (from panel to Control System)
+        /// Event Volume.Lower Touch (from panel to Control System)
         /// </summary>
-        event EventHandler<UIEventArgs> VolumeDnBtn_PressEvent;
-
-        /// <summary>
-        /// Event VolumeUpBtn.Press (from panel to Control System)
-        /// </summary>
-        event EventHandler<UIEventArgs> VolumeUpBtn_PressEvent;
+        event EventHandler<UIEventArgs> Volume_LowerTouchEvent;
 
         /// <summary>
         /// ReturnBtn.Visibility Feedback
@@ -73,46 +68,34 @@ namespace Masters2026NaxPanel
         void ReturnBtn_Selected(SideBarBoolInputSigDelegate callback);
 
         /// <summary>
-        /// VolumeDnBtn.Selected Feedback
-        /// </summary>
-        /// <param name="digital">The bool to update the panel.</param>
-        void VolumeDnBtn_Selected(bool digital);
-
-        /// <summary>
-        /// VolumeDnBtn.Selected Feedback
-        /// </summary>
-        /// <param name="callback">The bool delegate to update the panel.</param>
-        void VolumeDnBtn_Selected(SideBarBoolInputSigDelegate callback);
-
-        /// <summary>
-        /// VolumeUpBtn.Selected Feedback
-        /// </summary>
-        /// <param name="digital">The bool to update the panel.</param>
-        void VolumeUpBtn_Selected(bool digital);
-
-        /// <summary>
-        /// VolumeUpBtn.Selected Feedback
-        /// </summary>
-        /// <param name="callback">The bool delegate to update the panel.</param>
-        void VolumeUpBtn_Selected(SideBarBoolInputSigDelegate callback);
-
-        /// <summary>
-        /// VolumeFb.Touch fb Feedback
+        /// Volume.Lower Touch fb Feedback
         /// </summary>
         /// <param name="analog">The short analog to update the panel.</param>
-        void VolumeFb_Touchfb(short analog);
+        void Volume_LowerTouchfb(short analog);
 
         /// <summary>
-        /// VolumeFb.Touch fb Feedback
+        /// Volume.Lower Touch fb Feedback
         /// </summary>
         /// <param name="analog">The ushort analog to update the panel.</param>
-        void VolumeFb_Touchfb(ushort analog);
+        void Volume_LowerTouchfb(ushort analog);
 
         /// <summary>
-        /// VolumeFb.Touch fb Feedback
+        /// Volume.Lower Touch fb Feedback
         /// </summary>
         /// <param name="callback">The ushort delegate to update the panel.</param>
-        void VolumeFb_Touchfb(SideBarUShortInputSigDelegate callback);
+        void Volume_LowerTouchfb(SideBarUShortInputSigDelegate callback);
+
+        /// <summary>
+        /// SourceVolumeLabelFb.Indirect Text Feedback
+        /// </summary>
+        /// <param name="serial">The <see cref="string"/> to update the panel.</param>
+        void SourceVolumeLabelFb_IndirectText(string serial);
+
+        /// <summary>
+        /// SourceVolumeLabelFb.Indirect Text Feedback
+        /// </summary>
+        /// <param name="callback">The <see cref="string"/> delegate to update the panel.</param>
+        void SourceVolumeLabelFb_IndirectText(SideBarStringInputSigDelegate callback);
     }
 
     /// <summary>
@@ -127,6 +110,12 @@ namespace Masters2026NaxPanel
     /// <param name="uShortInputSig">The <see cref="UShortInputSig"/> joinInfo data.</param>
     /// <param name="sidebar">The <see cref="ISideBar"/> on which to apply the feedback.</param>
     public delegate void SideBarUShortInputSigDelegate(UShortInputSig uShortInputSig, ISideBar sidebar);
+    /// <summary>
+    /// Digital callback used in feedback events.
+    /// </summary>
+    /// <param name="stringInputSig">The <see cref="StringInputSig"/> joinInfo data.</param>
+    /// <param name="sidebar">The <see cref="ISideBar"/> on which to apply the feedback.</param>
+    public delegate void SideBarStringInputSigDelegate(StringInputSig stringInputSig, ISideBar sidebar);
 
     /// <summary>
     /// SideBar
@@ -168,18 +157,6 @@ namespace Masters2026NaxPanel
                 /// </summary>
                 public const uint ReturnBtn_PressEvent = 2;
 
-                /// <summary>
-                /// Output or Event digital joinInfo from panel to Control System: SideBar.VolumeDnBtn.Press
-                /// VolumeDnBtn.Press
-                /// </summary>
-                public const uint VolumeDnBtn_PressEvent = 3;
-
-                /// <summary>
-                /// Output or Event digital joinInfo from panel to Control System: SideBar.VolumeUpBtn.Press
-                /// VolumeUpBtn.Press
-                /// </summary>
-                public const uint VolumeUpBtn_PressEvent = 4;
-
 
                 /// <summary>
                 /// Input or Feedback digital joinInfo from Control System to panel: SideBar.ReturnBtn.Visibility_fb
@@ -193,31 +170,37 @@ namespace Masters2026NaxPanel
                 /// </summary>
                 public const uint ReturnBtn_SelectedState = 3;
 
-                /// <summary>
-                /// Input or Feedback digital joinInfo from Control System to panel: SideBar.VolumeDnBtn.Selected
-                /// VolumeDnBtn.Selected
-                /// </summary>
-                public const uint VolumeDnBtn_SelectedState = 4;
-
-                /// <summary>
-                /// Input or Feedback digital joinInfo from Control System to panel: SideBar.VolumeUpBtn.Selected
-                /// VolumeUpBtn.Selected
-                /// </summary>
-                public const uint VolumeUpBtn_SelectedState = 5;
-
             }
             /// <summary>
             /// Analog signals.
             /// </summary>
             internal static class Numerics
             {
+                /// <summary>
+                /// Output or Event analog joinInfo from panel to Control System: SideBar.Volume.LowerTouch
+                /// Volume.Lower Touch
+                /// </summary>
+                public const uint Volume_LowerTouchEvent = 4;
+
 
                 /// <summary>
-                /// Input or Feedback analog joinInfo from Control System to panel: SideBar.VolumeFb.Touchfb
-                /// VolumeFb.Touch fb
+                /// Input or Feedback analog joinInfo from Control System to panel: SideBar.Volume.LowerTouchfb
+                /// Volume.Lower Touch fb
                 /// </summary>
-                public const uint VolumeFb_TouchfbState = 3;
+                public const uint Volume_LowerTouchfbState = 4;
 
+            }
+            /// <summary>
+            /// Serial signals.
+            /// </summary>
+            internal static class Strings
+            {
+
+                /// <summary>
+                /// Input or Feedback serial joinInfo from Control System to panel: SideBar.SourceVolumeLabelFb.IndirectText
+                /// SourceVolumeLabelFb.Indirect Text
+                /// </summary>
+                public const uint SourceVolumeLabelFb_IndirectTextState = 1;
             }
         }
 
@@ -269,8 +252,7 @@ namespace Masters2026NaxPanel
             _devices = new List<BasicTriListWithSmartObject>(); 
  
             ComponentMediator.ConfigureBooleanEvent(controlJoinId, Joins.Booleans.ReturnBtn_PressEvent, onReturnBtn_Press);
-            ComponentMediator.ConfigureBooleanEvent(controlJoinId, Joins.Booleans.VolumeDnBtn_PressEvent, onVolumeDnBtn_Press);
-            ComponentMediator.ConfigureBooleanEvent(controlJoinId, Joins.Booleans.VolumeUpBtn_PressEvent, onVolumeUpBtn_Press);
+            ComponentMediator.ConfigureNumericEvent(controlJoinId, Joins.Numerics.Volume_LowerTouchEvent, onVolume_LowerTouch);
         }
 
         public void AddDevice(BasicTriListWithSmartObject device)
@@ -299,19 +281,10 @@ namespace Masters2026NaxPanel
         }
 
         /// <inheritdoc/>
-        public event EventHandler<UIEventArgs> VolumeDnBtn_PressEvent;
-        private void onVolumeDnBtn_Press(SmartObjectEventArgs eventArgs)
+        public event EventHandler<UIEventArgs> Volume_LowerTouchEvent;
+        private void onVolume_LowerTouch(SmartObjectEventArgs eventArgs)
         {
-            EventHandler<UIEventArgs> handler = VolumeDnBtn_PressEvent;
-            if (handler != null)
-                handler(this, UIEventArgs.CreateEventArgs(eventArgs));
-        }
-
-        /// <inheritdoc/>
-        public event EventHandler<UIEventArgs> VolumeUpBtn_PressEvent;
-        private void onVolumeUpBtn_Press(SmartObjectEventArgs eventArgs)
-        {
-            EventHandler<UIEventArgs> handler = VolumeUpBtn_PressEvent;
+            EventHandler<UIEventArgs> handler = Volume_LowerTouchEvent;
             if (handler != null)
                 handler(this, UIEventArgs.CreateEventArgs(eventArgs));
         }
@@ -343,54 +316,41 @@ namespace Masters2026NaxPanel
         {
             ReturnBtn_Selected((sig, component) => sig.BoolValue = digital);
         }
+
         /// <inheritdoc/>
-        public void VolumeDnBtn_Selected(SideBarBoolInputSigDelegate callback)
+        public void Volume_LowerTouchfb(SideBarUShortInputSigDelegate callback)
         {
             for (int index = 0; index < Devices.Count; index++)
             {
-                callback(Devices[index].SmartObjects[ControlJoinId].BooleanInput[Joins.Booleans.VolumeDnBtn_SelectedState], this);
+                callback(Devices[index].SmartObjects[ControlJoinId].UShortInput[Joins.Numerics.Volume_LowerTouchfbState], this);
             }
         }
 
         /// <inheritdoc/>
-        public void VolumeDnBtn_Selected(bool digital)
+        public void Volume_LowerTouchfb(ushort analog)
         {
-            VolumeDnBtn_Selected((sig, component) => sig.BoolValue = digital);
+            Volume_LowerTouchfb((sig, component) => sig.UShortValue = analog);
         }
+
         /// <inheritdoc/>
-        public void VolumeUpBtn_Selected(SideBarBoolInputSigDelegate callback)
+        public void Volume_LowerTouchfb(short analog)
+        {
+            Volume_LowerTouchfb((sig, component) => sig.ShortValue = analog);
+        }
+
+        /// <inheritdoc/>
+        public void SourceVolumeLabelFb_IndirectText(SideBarStringInputSigDelegate callback)
         {
             for (int index = 0; index < Devices.Count; index++)
             {
-                callback(Devices[index].SmartObjects[ControlJoinId].BooleanInput[Joins.Booleans.VolumeUpBtn_SelectedState], this);
+                callback(Devices[index].SmartObjects[ControlJoinId].StringInput[Joins.Strings.SourceVolumeLabelFb_IndirectTextState], this);
             }
         }
 
         /// <inheritdoc/>
-        public void VolumeUpBtn_Selected(bool digital)
+        public void SourceVolumeLabelFb_IndirectText(string serial)
         {
-            VolumeUpBtn_Selected((sig, component) => sig.BoolValue = digital);
-        }
-
-        /// <inheritdoc/>
-        public void VolumeFb_Touchfb(SideBarUShortInputSigDelegate callback)
-        {
-            for (int index = 0; index < Devices.Count; index++)
-            {
-                callback(Devices[index].SmartObjects[ControlJoinId].UShortInput[Joins.Numerics.VolumeFb_TouchfbState], this);
-            }
-        }
-
-        /// <inheritdoc/>
-        public void VolumeFb_Touchfb(ushort analog)
-        {
-            VolumeFb_Touchfb((sig, component) => sig.UShortValue = analog);
-        }
-
-        /// <inheritdoc/>
-        public void VolumeFb_Touchfb(short analog)
-        {
-            VolumeFb_Touchfb((sig, component) => sig.ShortValue = analog);
+            SourceVolumeLabelFb_IndirectText((sig, component) => sig.StringValue = serial);
         }
 
         #endregion
@@ -421,8 +381,7 @@ namespace Masters2026NaxPanel
             IsDisposed = true;
 
             ReturnBtn_PressEvent = null;
-            VolumeDnBtn_PressEvent = null;
-            VolumeUpBtn_PressEvent = null;
+            Volume_LowerTouchEvent = null;
         }
 
         #endregion

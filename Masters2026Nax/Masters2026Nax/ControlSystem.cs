@@ -175,7 +175,7 @@ namespace Masters2026Nax
             NaxSourceConfiguration.AddSource(zone2, "Zone Off", 0);
 
 
-            // Zone 3 - NAX AUD-IO
+            // Zone 3 - NAX AUD-BTIO
             ushort zone3 = NaxSourceConfiguration.AddZone();
 
             NaxSourceConfiguration.AddSource(zone3, "NaxAmp Analog In 1", 2, "RCA1500.10.7f.f4.6a.5d");
