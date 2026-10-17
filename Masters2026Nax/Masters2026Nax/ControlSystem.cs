@@ -92,6 +92,7 @@ namespace Masters2026Nax
     {
         // this right here, THIS is a valid use for the ? here.  because these two class containers ARE nullable!
         UI? myXpanel;
+        UI? myOtherXpanel;
         HardwareSetup? Hardware;
 
         /// <summary>
@@ -132,14 +133,16 @@ namespace Masters2026Nax
             myXpanel = new UI(0x03, this);
             CwsDebugPage.LogInfo("TP Registered");
 
+            myOtherXpanel = new UI(0x04, this);
+            CwsDebugPage.LogInfo("Other TP Registered");
 
             Hardware = new HardwareSetup(this);
             CwsDebugPage.LogInfo("Hardware Setup Complete");
             // It can seem silly to put the above debug statements in but it gives real info when failures occour.
             // If we do not see those messages then  the class above it failed
             // there are instances in Crestron libraries that the exception will be swallowed
-
         }
+
         // For this example we are building the NAX source configuration directly in code
         // so it is easy to see exactly what is being added and how the configuration works.
         //

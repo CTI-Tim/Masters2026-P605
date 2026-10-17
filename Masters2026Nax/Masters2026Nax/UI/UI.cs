@@ -36,6 +36,19 @@ namespace Masters2026Nax
 
         private ushort lastSourceTouched = 0;
 
+        /// <summary>
+        /// Tracks the number of times this class has been instantiated.
+        /// </summary>
+        /// <remarks>Incremented when an instance is created.</remarks>
+        private static ushort instanceCount = 0;
+
+        /// <summary>
+        /// This is the instance ID of the instantiated class.  IDs start at 1.
+        /// This is used to identify the UI instance in CRPC messages sent to the UI's
+        /// Media Player.
+        /// </summary>
+        private ushort instanceId;
+
 
         // #########################################################################
         // Constructor and UI Setup
@@ -57,6 +70,9 @@ namespace Masters2026Nax
             myContract.AddDevice(myXpanel);
 
             myXpanel.Register();
+
+            instanceCount++;
+            instanceId = instanceCount;
 
 
             // ---------------------------------------------------------------------
@@ -139,6 +155,8 @@ namespace Masters2026Nax
                     i,
                     NaxSourceConfiguration.GetSourceName(3, i));
             }
+
+            CwsDebugPage.LogNotice($"CRPC Message example (generated): {CRPC.GetSourceChangeMessage(instanceId, 2)}");
         }
 
         // -------------------------------------------------------------------------
