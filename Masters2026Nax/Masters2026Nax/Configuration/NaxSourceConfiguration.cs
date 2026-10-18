@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Masters2026Nax.Configuration
 {
@@ -341,10 +342,12 @@ namespace Masters2026Nax.Configuration
         {
             // Id strings are in the form HardwareId.PlayerN where N is the
             // player number.
+            if (string.IsNullOrEmpty(mediaPlayerId))
+                return 0;
             var parts = mediaPlayerId.Split('.');
             if (parts.Length != 2)
                 return 0;
-            if (!parts[1].StartsWith("Player"))
+            if (!parts[1].StartsWith("Player", StringComparison.Ordinal))
                 return 0;
             if (!ushort.TryParse(parts[1].Substring("Player".Length), out var playerNumber))
                 return 0;
@@ -356,8 +359,8 @@ namespace Masters2026Nax.Configuration
         /// identifier formatted as 'HardwareId.PlayerN'.
         /// </summary>
         /// <remarks>Validates that the identifier contains two segments separated
-        /// by '.' and that the first segment contains a value. Passing null results 
-        /// in a NullReferenceException.</remarks>
+        /// by '.' and that the first segment contains a value. Null or empty input
+        /// returns an empty string.</remarks>
         /// <param name="mediaPlayerId">Media player identifier in the form 
         /// 'HardwareId.PlayerN'.</param>
         /// <returns>The hardware identifier (segment before the '.') when 
@@ -366,6 +369,8 @@ namespace Masters2026Nax.Configuration
         public static string GetHardwareIdFromMediaPlayerId(string mediaPlayerId)
         {
             // Id strings are in the form HardwareId
+            if (string.IsNullOrEmpty(mediaPlayerId))
+                return string.Empty;
             var parts = mediaPlayerId.Split('.');
             if (parts.Length != 2)
                 return string.Empty;
@@ -409,8 +414,18 @@ namespace Masters2026Nax.Configuration
         public string Name { get; private set; }
         public ushort SourceNumber { get; private set; }
         public string SessionName { get; private set; }
-        public bool IsMediaPlayer => MediaPlayerId != string.Empty;
-        public string MediaPlayerId { get; set; } = string.Empty;
+        public bool IsMediaPlayer => !string.IsNullOrEmpty(MediaPlayerId);
+
+        private string mediaPlayerId = string.Empty;
+        /// <summary>
+        /// Media player ID in the form HardwareId.PlayerN. Null is normalized to an
+        /// empty string, which means this source is not a media player.
+        /// </summary>
+        public string MediaPlayerId
+        {
+            get => mediaPlayerId;
+            set => mediaPlayerId = value ?? string.Empty;
+        }
 
 
         public NaxSourceDefinition(

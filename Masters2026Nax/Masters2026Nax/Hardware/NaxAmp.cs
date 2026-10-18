@@ -6,6 +6,7 @@ using Crestron.SimplSharpPro.AudioDistribution;
 using Crestron.SimplSharpPro.Media;
 using CwsDebug;
 using System;
+using System.Collections.Generic;
 
 namespace Masters2026Nax.Hardware
 {
@@ -46,9 +47,11 @@ namespace Masters2026Nax.Hardware
         private DmNax8Zsa myNaxAmp;
 
         // The NAX Amp Media Players can sometimes send the exact same CRPC message
-        // more than once. Keep the last message so we can ignore a duplicate that
-        // arrives immediately after it.
-        private string lastCrpcMessage = "";
+        // more than once. Keep the last message for each player so we can ignore a
+        // duplicate that arrives immediately after it. This is tracked per player
+        // so identical messages from different players are not mistaken for duplicates.
+        private readonly Dictionary<uint, string> lastCrpcMessages =
+            new Dictionary<uint, string>();
 
         /// <summary>
         /// This identifies the hardware hosting the media players and is used
@@ -267,11 +270,12 @@ namespace Masters2026Nax.Hardware
             // twice. There is no reason to send duplicate data through the rest of our
             // program, so ignore it when it is identical to the previous message.
             //
-            // This only catches messages repeated back to back. If another message is
-            // received in between, the original message is allowed through again.
-            if (crpc != lastCrpcMessage)
+            // This only catches messages repeated back to back from the same player. If
+            // another message is received in between, the original message is allowed
+            // through again.
+            if (!lastCrpcMessages.TryGetValue(player, out var lastCrpc) || crpc != lastCrpc)
             {
-                lastCrpcMessage = crpc;
+                lastCrpcMessages[player] = crpc;
 
                 var e = new CrpcMessageEventArgs
                 {
