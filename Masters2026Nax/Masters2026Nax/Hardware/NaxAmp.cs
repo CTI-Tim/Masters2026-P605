@@ -50,6 +50,14 @@ namespace Masters2026Nax.Hardware
         // arrives immediately after it.
         private string lastCrpcMessage = "";
 
+        /// <summary>
+        /// This identifies the hardware hosting the media players and is used
+        /// to subscribe to brokered messages.  This should be unique for each
+        /// piece of hardware in the system that hosts media players.  The UI uses 
+        /// this to subscribe to the correct player instance.
+        /// </summary>
+        public string HardwareId { get; private set; }
+
         public event EventHandler<ZoneFeedbackEventArgs> ZoneFeedbackChanged;
         public event EventHandler<CrpcMessageEventArgs> CrpcMessageReceived;
 
@@ -58,8 +66,9 @@ namespace Masters2026Nax.Hardware
         // Constructor and Hardware Setup
         // #########################################################################
 
-        public NaxAmp(ushort ampIpid, ControlSystem cs)
+        public NaxAmp(ushort ampIpid, string hardwareId, ControlSystem cs)
         {
+            HardwareId = hardwareId;
             myNaxAmp = new DmNax8Zsa(ampIpid, cs);
 
             // Hook the hardware events before registration so we are ready to receive

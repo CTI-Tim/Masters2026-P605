@@ -78,29 +78,30 @@ namespace Masters2026Nax.Configuration
         /// NaxSourceDefinition(string Name, ushort SourceNumber,
         ///                     string SessionName, bool IsMediaPlayer)
         ///
-        /// Name          - Friendly name displayed on the touchpanel.
-        /// SourceNumber  - Actual source number sent to the NAX device.
-        /// SessionName   - AES67 Session Name if this source uses a stream.
-        ///                 Leave this as "" when the source does not use a stream.
-        /// IsMediaPlayer - True if this source represents a NAX Media Player so
-        ///                 the UI knows to display the Media Player controls.
-        ///
         /// The order sources are added is important because their position in the
         /// List becomes the button index used by the touchpanel.
         /// </summary>
+        /// <param name="name">Friendly name displayed on the touchpanel.</param>
+        /// <param name="sourceNumber">Actual source number sent to the NAX device.</param>
+        /// <param name="sessionName">AES67 Session Name if this source uses a stream.</param>
+        /// <param name="mediaPlayerId">ID of the Media Player if this source 
+        /// represents a Media Player.  Blank for non-player sources.  Use the form 
+        /// HardwareId.PlayerN, where N is the player number on the specific piece of 
+        /// hardware.  For Nax players, these start at 1 and go up to the number of 
+        /// individual players on the device.</param>
         public static void AddSource(
             ushort zone,
             string name,
             ushort sourceNumber,
             string sessionName = "",
-            bool isMediaPlayer = false)
+            string mediaPlayerId = "")
         {
             SourceLists[zone].Add(
                 new NaxSourceDefinition(
                     name,
                     sourceNumber,
                     sessionName,
-                    isMediaPlayer));
+                    mediaPlayerId));
         }
 
 
@@ -312,6 +313,66 @@ namespace Masters2026Nax.Configuration
             return SourceLists[sourceList][buttonIndex].IsMediaPlayer;
         }
 
+        /// <summary>
+        /// Get the media player ID string for a specific source.
+        /// </summary>
+        /// <param name="sourceList">Which source list to refer to.</param>
+        /// <param name="buttonIndex">Which button the source is linked to.</param>
+        /// <returns>The media player ID in the form 'HardwareId.PlayerN'.</returns>
+        public static string GetMediaPlayerId(
+            ushort sourceList,
+            ushort buttonIndex)
+        {
+            if (sourceList >= SourceLists.Count)
+                return string.Empty;
+            if (buttonIndex >= SourceLists[sourceList].Count)
+                return string.Empty;
+            return SourceLists[sourceList][buttonIndex].MediaPlayerId;
+        }
+
+        /// <summary>
+        /// Get the player number from the mediaPlayerId formatted as
+        /// HardwareId.PlayerN.
+        /// </summary>
+        /// <param name="mediaPlayerId">Media player identifier in the form 
+        /// 'HardwareId.PlayerN'.</param>
+        /// <returns>The player number, usually starting from 1.</returns>
+        public static ushort GetMediaPlayerSourceNumber(string mediaPlayerId)
+        {
+            // Id strings are in the form HardwareId.PlayerN where N is the
+            // player number.
+            var parts = mediaPlayerId.Split('.');
+            if (parts.Length != 2)
+                return 0;
+            if (!parts[1].StartsWith("Player"))
+                return 0;
+            if (!ushort.TryParse(parts[1].Substring("Player".Length), out var playerNumber))
+                return 0;
+            return playerNumber;
+        }
+
+        /// <summary>
+        /// Gets the hardware identifier (e.g., 'Nax1') from a media player 
+        /// identifier formatted as 'HardwareId.PlayerN'.
+        /// </summary>
+        /// <remarks>Validates that the identifier contains two segments separated
+        /// by '.' and that the first segment contains a value. Passing null results 
+        /// in a NullReferenceException.</remarks>
+        /// <param name="mediaPlayerId">Media player identifier in the form 
+        /// 'HardwareId.PlayerN'.</param>
+        /// <returns>The hardware identifier (segment before the '.') when 
+        /// mediaPlayerId is in the form 'HardwareId.PlayerN'; otherwise, an 
+        /// empty string.</returns>
+        public static string GetHardwareIdFromMediaPlayerId(string mediaPlayerId)
+        {
+            // Id strings are in the form HardwareId
+            var parts = mediaPlayerId.Split('.');
+            if (parts.Length != 2)
+                return string.Empty;
+            if (parts[0].Length == 0)
+                return string.Empty;
+            return parts[0];
+        }
 
         /// <summary>
         /// Returns the number of sources configured in the selected source list.
@@ -331,34 +392,37 @@ namespace Masters2026Nax.Configuration
     /// Describes one source in a NAX source list.
     ///
     /// NaxSourceDefinition(string Name, ushort SourceNumber,
-    ///                     string SessionName, bool IsMediaPlayer)
-    ///
-    /// Name          - Friendly name displayed on the touchpanel.
-    /// SourceNumber  - Actual source number sent to the NAX device.
-    /// SessionName   - AES67 Session Name if this source uses a stream.
-    /// IsMediaPlayer - True if this source represents a NAX Media Player.
-    ///
+    ///                     string SessionName, string MediaPlayerId)
     /// The object only describes a source. It does not know which hardware is
     /// using it, where the configuration came from, or what the UI will do with it.
     /// </summary>
+    /// <param name="name">Friendly name displayed on the touchpanel.</param>
+    /// <param name="sourceNumber">Actual source number sent to the NAX device.</param>
+    /// <param name="sessionName">AES67 Session Name if this source uses a stream.</param>
+    /// <param name="mediaPlayerId">ID of the Media Player if this source 
+    /// represents a Media Player.  Blank for non-player sources.  Use the form 
+    /// HardwareId.PlayerN, where N is the player number on the specific piece of 
+    /// hardware.  For Nax players, these start at 1 and go up to the number of 
+    /// individual players on the device.</param>
     public class NaxSourceDefinition
     {
         public string Name { get; private set; }
         public ushort SourceNumber { get; private set; }
         public string SessionName { get; private set; }
-        public bool IsMediaPlayer { get; private set; }
+        public bool IsMediaPlayer => MediaPlayerId != string.Empty;
+        public string MediaPlayerId { get; set; } = string.Empty;
 
 
         public NaxSourceDefinition(
             string name,
             ushort sourceNumber,
             string sessionName = "",
-            bool isMediaPlayer = false)
+            string mediaPlayerId = "")
         {
             Name = name;
             SourceNumber = sourceNumber;
             SessionName = sessionName;
-            IsMediaPlayer = isMediaPlayer;
+            MediaPlayerId = mediaPlayerId;
         }
     }
 }
