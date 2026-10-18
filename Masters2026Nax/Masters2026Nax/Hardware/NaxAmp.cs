@@ -61,6 +61,13 @@ namespace Masters2026Nax.Hardware
         /// </summary>
         public string HardwareId { get; private set; }
 
+        /// <summary>
+        /// The player numbers this amp actually has. We ask the Crestron collection
+        /// for its keys instead of assuming the players are numbered 1 to N.
+        /// </summary>
+        public IEnumerable<uint> PlayerNumbers =>
+            myNaxAmp.Players.TransportControls.Keys;
+
         public event EventHandler<ZoneFeedbackEventArgs> ZoneFeedbackChanged;
         public event EventHandler<CrpcMessageEventArgs> CrpcMessageReceived;
 

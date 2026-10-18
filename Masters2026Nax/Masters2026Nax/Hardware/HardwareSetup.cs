@@ -55,12 +55,11 @@ namespace Masters2026Nax.Hardware
             // ---------------------------------------------------------------------
             myNaxamp = new NaxAmp(0x10, "Nax1", cs);
             myNaxamp.ZoneFeedbackChanged += MyNaxamp_ZoneFeedbackChanged;
-            myNaxamp.CrpcMessageReceived += MyNaxamp_CrpcMessageReceived;
+            myNaxamp.CrpcMessageReceived += NaxAmp_CrpcMessageReceived;
+            ConnectMediaPlayersToBroker(myNaxamp);
 
             Broker.AddDelegate("Zone1Source", Zone1SourceSelect);
             Broker.AddDelegate("Zone2Source", Zone2SourceSelect);
-            Broker.AddDelegate($"UiMediaPlayerCrpcMessageTo{myNaxamp.HardwareId}", 
-                SendUiMediaPlayerCrpcToHardware);
 
             // -------------------------------------------------------------------
             // NAX BTIO
@@ -230,40 +229,64 @@ namespace Masters2026Nax.Hardware
         // #########################################################################
 
         /// <summary>
-        /// CRPC feedback came from the NAX amplifier. Put it on the broker so the 
-        /// UI can consume it without needing to know anything about NaxAmp.
+        /// Subscribes every media player on a NAX amp to its CRPC command key, so
+        /// CRPC sent by any UI reaches the right player. Call this once per amp.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MyNaxamp_CrpcMessageReceived(
-            object? sender,
-            NaxAmp.CrpcMessageEventArgs e)
+        /// <param name="amp">The NAX amp whose players should listen for CRPC.</param>
+        private void ConnectMediaPlayersToBroker(NaxAmp amp)
         {
-            // The message key must be the same here and in the UI class.  The UI
-            // is listening for this message key and will forward the CRPC feedback
-            // to the media player.  If the keys do not match, the feedback will
-            // not reach the UI.
-            Broker.SendMessage(
-                $"HardwareMediaPlayer[{myNaxamp.HardwareId}.Player{e.Player}]CrpcFb",
-                new Message { Serial = e.CRPCMessage });
+            foreach (var playerNumber in amp.PlayerNumbers)
+            {
+                var mediaPlayer = new MediaPlayerId(amp.HardwareId, (ushort)playerNumber);
+
+                // The broker message only carries the CRPC text, so each player gets
+                // its own small handler that remembers which player it belongs to.
+                // foreach gives every pass its own mediaPlayer variable, so each
+                // lambda sends to its own player.
+                Broker.AddDelegate(
+                    mediaPlayer.CommandKey,
+                    m => SendCrpcToPlayer(amp, mediaPlayer, m));
+
+                CwsDebugPage.LogInfo($"{mediaPlayer} is listening for CRPC on {mediaPlayer.CommandKey}");
+            }
         }
 
         /// <summary>
-        /// Forwards a CRPC message received from the UI to the appropriate media 
-        /// player in the NAX amp.
+        /// Forwards a CRPC message received from a UI to one media player.
         /// </summary>
-        /// <remarks>Destination hardware wrapper is determined by HardwareSetup. 
-        /// The message is sent via myNaxamp.  The player is identified by m.Analog 
-        /// and the CRPC message uses m.Serial.</remarks>
-        /// <param name="m">The CRPC message received from the UI to forward to the 
-        /// appropriate player.</param>
-        public void SendUiMediaPlayerCrpcToHardware(Message m)
+        /// <param name="amp">The NAX amp hosting the player.</param>
+        /// <param name="mediaPlayer">The player the message is for.</param>
+        /// <param name="m">The CRPC message. m.Serial holds the CRPC text.</param>
+        private void SendCrpcToPlayer(NaxAmp amp, MediaPlayerId mediaPlayer, Message m)
         {
-            CwsDebugPage.LogNotice($"HardwareSetup is sending CRPC message from UI to NAX amp Player{m.Analog}: {m.Serial}");
+            CwsDebugPage.LogNotice($"HardwareSetup is sending CRPC from UI to {mediaPlayer}: {m.Serial}");
 
-            // CRPC coming the other direction arrived from the UI through the broker.
-            // The NaxSourceConfiguration knows which hardware wrapper should receive it.
-            myNaxamp.SendCrpc(m.Analog, m.Serial);
+            amp.SendCrpc(mediaPlayer.PlayerNumber, m.Serial);
+        }
+
+        /// <summary>
+        /// CRPC feedback came from a NAX amp. Put it on the broker so any UI
+        /// connected to that player can consume it without needing to know
+        /// anything about NaxAmp.
+        /// </summary>
+        /// <param name="sender">The NaxAmp that received the feedback.</param>
+        /// <param name="e">The player number and CRPC text.</param>
+        private void NaxAmp_CrpcMessageReceived(
+            object? sender,
+            NaxAmp.CrpcMessageEventArgs e)
+        {
+            // Use the sender instead of myNaxamp, so this one handler works for
+            // every NAX amp in the system.
+            if (sender is not NaxAmp amp)
+                return;
+
+            var mediaPlayer = new MediaPlayerId(amp.HardwareId, (ushort)e.Player);
+
+            // SendMessage returns false when no UI has this player open. That is
+            // normal, so there is nothing to log.
+            Broker.SendMessage(
+                mediaPlayer.FeedbackKey,
+                new Message { Serial = e.CRPCMessage });
         }
     }
 }

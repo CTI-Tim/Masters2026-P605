@@ -163,8 +163,8 @@ namespace Masters2026Nax
 
             NaxSourceConfiguration.AddSource(zone1, "NaxAmp Analog In 1", 5);
             NaxSourceConfiguration.AddSource(zone1, "USB Input", 17, "Stream02c4.42.68.74.dd.01");
-            NaxSourceConfiguration.AddSource(zone1, "Media Player 1", 9, "", "Nax1.Player1");
-            NaxSourceConfiguration.AddSource(zone1, "Media Player 2", 10, "", "Nax1.Player2");
+            NaxSourceConfiguration.AddSource(zone1, "Media Player 1", 9, "", new MediaPlayerId("Nax1", 1));
+            NaxSourceConfiguration.AddSource(zone1, "Media Player 2", 10, "", new MediaPlayerId("Nax1", 2));
             NaxSourceConfiguration.AddSource(zone1, "Zone Off", 0);
 
 
@@ -173,8 +173,8 @@ namespace Masters2026Nax
 
             NaxSourceConfiguration.AddSource(zone2, "NaxAmp Analog In 1", 5);
             NaxSourceConfiguration.AddSource(zone2, "USB Input", 17, "Stream02c4.42.68.74.dd.01");
-            NaxSourceConfiguration.AddSource(zone2, "Media Player 1", 9, "", "Nax1.Player1");
-            NaxSourceConfiguration.AddSource(zone2, "Media Player 2", 10, "", "Nax1.Player2");
+            NaxSourceConfiguration.AddSource(zone2, "Media Player 1", 9, "", new MediaPlayerId("Nax1", 1));
+            NaxSourceConfiguration.AddSource(zone2, "Media Player 2", 10, "", new MediaPlayerId("Nax1", 2));
             NaxSourceConfiguration.AddSource(zone2, "Zone Off", 0);
 
 
@@ -183,8 +183,8 @@ namespace Masters2026Nax
 
             NaxSourceConfiguration.AddSource(zone3, "NaxAmp Analog In 1", 2, "RCA1500.10.7f.f4.6a.5d");
             NaxSourceConfiguration.AddSource(zone3, "USB Input", 2, "Stream02c4.42.68.74.dd.01");
-            NaxSourceConfiguration.AddSource(zone3, "Media Player 1", 2, "MediaStream1900.10.7f.f4.6a.5d", "Nax1.Player1");
-            NaxSourceConfiguration.AddSource(zone3, "Media Player 2", 2, "MediaStream21000.10.7f.f4.6a.5d", "Nax1.Player2");
+            NaxSourceConfiguration.AddSource(zone3, "Media Player 1", 2, "MediaStream1900.10.7f.f4.6a.5d", new MediaPlayerId("Nax1", 1));
+            NaxSourceConfiguration.AddSource(zone3, "Media Player 2", 2, "MediaStream21000.10.7f.f4.6a.5d", new MediaPlayerId("Nax1", 2));
             NaxSourceConfiguration.AddSource(zone3, "Zone Off", 0);
         }
 

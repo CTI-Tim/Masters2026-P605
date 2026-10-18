@@ -50,10 +50,10 @@ namespace Masters2026Nax
         private ushort instanceId;
 
         /// <summary>
-        /// This is the last media player that the panel connected to.  Used to 
-        /// unsubscribe from the message broker.
+        /// The media player this panel is connected to, or null if none.  Used to
+        /// send CRPC to the right player and to unsubscribe from the message broker.
         /// </summary>
-        private string lastMediaPlayerId = string.Empty;
+        private MediaPlayerId connectedMediaPlayer = null;
 
 
         // #########################################################################
@@ -372,10 +372,11 @@ namespace Masters2026Nax
                 myContract.MediaControl.VisibilityJoin(true);
                 myContract.MediaControl.VisibilityJoin(false);
 
-                CwsDebugPage.LogNotice($"UI instance {instanceId} is connecting to Media Player {NaxSourceConfiguration.GetMediaPlayerId(zone, buttonIndex)}");
+                var mediaPlayer = NaxSourceConfiguration.GetMediaPlayer(zone, buttonIndex);
 
-                var mediaPlayerId = NaxSourceConfiguration.GetMediaPlayerId(zone, buttonIndex);
-                ChangeMediaPlayerSource(mediaPlayerId);
+                CwsDebugPage.LogNotice($"UI instance {instanceId} is connecting to Media Player {mediaPlayer}");
+
+                ChangeMediaPlayerSource(mediaPlayer);
             }
             else
             {
@@ -388,18 +389,18 @@ namespace Masters2026Nax
         /// Unsubscribes the broker from the previously connected hardware media player 
         /// and clears the stored last media player identifier.
         /// </summary>
-        /// <remarks>If lastMediaPlayerId is empty, no action is taken. Logs a disconnect 
-        /// notice and removes the delegate named using the pattern 'HardwareMediaPlayer[{id}]CrpcFb'.</remarks>
+        /// <remarks>If no media player is connected, no action is taken. Logs a
+        /// disconnect notice and removes the delegate from the player's FeedbackKey.</remarks>
         private void UnsubscribeFromLastMediaPlayer()
         {
-            if (lastMediaPlayerId != string.Empty)
+            if (connectedMediaPlayer != null)
             {
-                CwsDebugPage.LogNotice($"UI instance {instanceId} is disconnecting from Media Player {lastMediaPlayerId}");
+                CwsDebugPage.LogNotice($"UI instance {instanceId} is disconnecting from Media Player {connectedMediaPlayer}");
                 // Unsubscribe from the last media player we were connected to.
                 Broker.RemoveDelegate(
-                    $"HardwareMediaPlayer[{lastMediaPlayerId}]CrpcFb",
+                    connectedMediaPlayer.FeedbackKey,
                     SendHardwareMediaPlayerCrpcFbToUi);
-                lastMediaPlayerId = string.Empty;
+                connectedMediaPlayer = null;
             }
         }
 
@@ -410,14 +411,14 @@ namespace Masters2026Nax
         /// updates the Construct Media Player connection state (clears offline 
         /// and sets the player name), unsubscribes from the previous media player 
         /// when the ID differs, subscribes to the new player's CRPC feedback 
-        /// via the broker, and updates lastMediaPlayerId. If mediaPlayerId equals 
+        /// via the broker, and updates connectedMediaPlayer. If mediaPlayer equals
         /// the current one, no unsubscribe/subscribe is performed.</remarks>
-        /// <param name="mediaPlayerId">Identifier of the media player to connect to.</param>
-        private void ChangeMediaPlayerSource(string mediaPlayerId)
+        /// <param name="mediaPlayer">The media player to connect to.</param>
+        private void ChangeMediaPlayerSource(MediaPlayerId mediaPlayer)
         {
             var sourceChangeMessage = CRPC.GetSourceChangeMessage(
-                instanceId, 
-                NaxSourceConfiguration.GetMediaPlayerSourceNumber(mediaPlayerId));
+                instanceId,
+                NaxSourceConfiguration.GetMediaPlayerSrc(mediaPlayer));
             CwsDebugPage.LogNotice($"CRPC Message: {sourceChangeMessage}");
 
             // The Construct Media Player object needs this connection information
@@ -427,7 +428,8 @@ namespace Masters2026Nax
             myContract.MediaControl.MediaPlayer.MediaPlayer_Offline(false);
             myContract.MediaControl.MediaPlayer.MediaPlayer_Player_Name("TEST");
 
-            if (mediaPlayerId == lastMediaPlayerId)
+            // MediaPlayerId is a record, so == compares HardwareId and PlayerNumber.
+            if (mediaPlayer == connectedMediaPlayer)
             {
                 // The UI is already connected to the Media Player. No need to
                 // unsubscribe and resubscribe.
@@ -439,13 +441,13 @@ namespace Masters2026Nax
             // Subscribe to the Hardware Media Player's CRPC feedback.  The feedback
             // is sent to the UI through the broker and then forwarded to the UI's
             // Media Player object.
-            CwsDebugPage.LogNotice($"UI instance {instanceId} is subscribing to HardwareMediaPlayer[{mediaPlayerId}]CrpcFb");
+            CwsDebugPage.LogNotice($"UI instance {instanceId} is subscribing to {mediaPlayer.FeedbackKey}");
 
             Broker.AddDelegate(
-                $"HardwareMediaPlayer[{mediaPlayerId}]CrpcFb",
+                mediaPlayer.FeedbackKey,
                 SendHardwareMediaPlayerCrpcFbToUi);
 
-            lastMediaPlayerId = mediaPlayerId;
+            connectedMediaPlayer = mediaPlayer;
         }
 
         /// <summary>
@@ -459,25 +461,26 @@ namespace Masters2026Nax
             object sender,
             UIEventArgs e)
         {
-            if (lastMediaPlayerId == string.Empty)
+            if (connectedMediaPlayer == null)
             {
                 CwsDebugPage.LogNotice($"UI instance {instanceId} received a CRPC message from the Construct Media Player, but no media player is currently connected. Message ignored.");
                 return;
             }
 
-            var hardwareDestinationId = NaxSourceConfiguration.GetHardwareIdFromMediaPlayerId(lastMediaPlayerId);
-            var playerSourceNumber = NaxSourceConfiguration.GetMediaPlayerSourceNumber(lastMediaPlayerId);
-
-            CwsDebugPage.LogNotice($"UI instance {instanceId} is sending CRPC message from Construct Media Player to hardware destination {hardwareDestinationId}.Player{playerSourceNumber}: {e.SigArgs.Sig.StringValue}");
+            CwsDebugPage.LogNotice($"UI instance {instanceId} is sending CRPC message from Construct Media Player to {connectedMediaPlayer}: {e.SigArgs.Sig.StringValue}");
 
             // CRPC from the touchpanel is simply passed into the Message Broker.
-            Broker.SendMessage(
-                $"UiMediaPlayerCrpcMessageTo{hardwareDestinationId}",
-                new Message
-                {
-                    Analog = playerSourceNumber,
-                    Serial = e.SigArgs.Sig.StringValue
-                });
+            var delivered = Broker.SendMessage(
+                connectedMediaPlayer.CommandKey,
+                new Message { Serial = e.SigArgs.Sig.StringValue });
+
+            // Nothing listening means the configuration points at hardware or a
+            // player that HardwareSetup never connected. Say so instead of failing
+            // silently.
+            if (!delivered)
+            {
+                CwsDebugPage.LogError($"UI instance {instanceId}: no hardware is listening for {connectedMediaPlayer}. Check that its HardwareId and PlayerNumber match the hardware set up in HardwareSetup.");
+            }
         }
 
         /// <summary>
