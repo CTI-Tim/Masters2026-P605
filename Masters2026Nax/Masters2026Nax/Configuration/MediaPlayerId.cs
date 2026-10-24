@@ -15,7 +15,8 @@ namespace Masters2026Nax.Configuration
     //
     // This is a record, so two MediaPlayerId objects holding the same
     // HardwareId and PlayerNumber are equal.  That lets the UI simply ask "is this
-    // the same player I'm already connected to?" with ==.
+    // the same player I'm already connected to?" with ==.  We would have to write a
+    // lot of code to do that if this were a class.
     // ##############################################################################
 
     /// <summary>
@@ -57,6 +58,9 @@ namespace Masters2026Nax.Configuration
         /// <summary>
         /// Broker key for CRPC traveling from a UI to this player.
         /// The hardware subscribes to it; the UI sends on it.
+        /// 
+        /// {this} leverages string interpolation and an override of ToString() to 
+        /// produce a readable form such as "Nax1.Player1".
         /// </summary>
         public string CommandKey => $"MediaPlayer[{this}]Crpc";
 

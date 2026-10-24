@@ -58,15 +58,13 @@ namespace Masters2026Nax.Hardware
         /// to subscribe to brokered messages.  This should be unique for each
         /// piece of hardware in the system that hosts media players.  The UI uses 
         /// this to subscribe to the correct player instance.
+        /// 
+        /// We could use a string in the HardwareSetup class to identify the hardware, 
+        /// but that would be a "magic string".  Instead we place the identifier in 
+        /// the hardware wrapper so that the UI and HardwareSetup can both use it without
+        /// hardcoding the string in multiple places.
         /// </summary>
         public string HardwareId { get; private set; }
-
-        /// <summary>
-        /// The player numbers this amp actually has. We ask the Crestron collection
-        /// for its keys instead of assuming the players are numbered 1 to N.
-        /// </summary>
-        public IEnumerable<uint> PlayerNumbers =>
-            myNaxAmp.Players.TransportControls.Keys;
 
         public event EventHandler<ZoneFeedbackEventArgs> ZoneFeedbackChanged;
         public event EventHandler<CrpcMessageEventArgs> CrpcMessageReceived;

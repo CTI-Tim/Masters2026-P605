@@ -34,8 +34,6 @@ namespace Masters2026Nax
         private XpanelForHtml5 myXpanel;
         private Contract myContract;
 
-        private ushort lastSourceTouched = 0;
-
         /// <summary>
         /// Tracks the number of times this class has been instantiated.
         /// </summary>
@@ -111,6 +109,15 @@ namespace Masters2026Nax
 
             // Media Player CRPC
             myContract.MediaControl.MediaPlayer.MediaPlayer_CRPCEvent += MediaPlayer_MediaPlayer_CRPCEvent;
+
+            // Unsubscribe from the media player when the user presses the return button.
+            // In testing, we found that if the user flips pages directly without giving
+            // the media player time to process the source change message, it may not
+            // connect properly to the next player source, particularly if it is a change.
+            //
+            // tl;dr: programatically close the media player instead of using a hard-coded
+            // page flip.
+            myContract.MediaControl.ReturnBtn_PressEvent += MediaControl_ReturnBtn_PressEvent;
 
 
             // ---------------------------------------------------------------------
@@ -221,6 +228,41 @@ namespace Masters2026Nax
                 (ushort)source);
         }
 
+        /// <summary>
+        /// Handles the media control Return button press by ensuring the source-
+        /// change message is passed between the players and then triggers the
+        /// page flip back to the Main page.
+        /// </summary>
+        /// <remarks>When the button is pressed, a source-change message is sent before leaving the
+        /// subpage, a short delay allows player message exchange, then the previous media player subscription is
+        /// removed and main page visibility is restored.</remarks>
+        /// <param name="sender">Object that raised the event.</param>
+        /// <param name="e">Event data containing the digital press state for the Return button.</param>
+        private void MediaControl_ReturnBtn_PressEvent(object sender, UIEventArgs e)
+        {
+            if (e.SigArgs.Sig.BoolValue)
+            {
+                // Send the source change message to the Media Player while
+                // the subpage is still open so it can process the message.
+                // This keeps the player in the correct state when it is
+                // reopened later.  I found that if the subpage is closed
+                // by a direct page flip and this change message isn't sent,
+                // the player may not connect properly to the next player,
+                // particularly if it is a source change.
+                myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(CRPC.GetSourceChangeMessage(instanceId, 0));
+
+                // Give the Media Players time to exchange the source change messages.
+                Thread.Sleep(200);
+
+                CwsDebugPage.LogNotice($"UI instance {instanceId} is returning from the Media Player page and unsubscribing from the media player.");
+
+                UnsubscribeFromLastMediaPlayer();
+
+                myContract.Main.VisibilityJoin(true);
+                myContract.Main.VisibilityJoin(false);
+            }
+        }
+
         // Volume
         private void Main_Output1Volume_LowerTouchEvent(object sender, UIEventArgs e)
         {
@@ -259,6 +301,9 @@ namespace Masters2026Nax
                 // join high and then low again.
                 myContract.Main.VisibilityJoin(true);
                 myContract.Main.VisibilityJoin(false);
+
+                // Clear the last connected media player so we can reconnect if needed.
+                connectedMediaPlayer = null;
             }
         }
 
@@ -368,7 +413,7 @@ namespace Masters2026Nax
                 buttonIndex))
             {
                 // The selected source represents a NAX Media Player, so show the
-                // Media Player controls and make the Return button available.
+                // Media Player controls page.
                 myContract.MediaControl.VisibilityJoin(true);
                 myContract.MediaControl.VisibilityJoin(false);
 
@@ -381,7 +426,6 @@ namespace Masters2026Nax
             else
             {
                 UnsubscribeFromLastMediaPlayer();
-                myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(CRPC.GetSourceChangeMessage(instanceId, 0));
             }
         }
 
@@ -393,15 +437,17 @@ namespace Masters2026Nax
         /// disconnect notice and removes the delegate from the player's FeedbackKey.</remarks>
         private void UnsubscribeFromLastMediaPlayer()
         {
-            if (connectedMediaPlayer != null)
+            if (connectedMediaPlayer == null)
             {
-                CwsDebugPage.LogNotice($"UI instance {instanceId} is disconnecting from Media Player {connectedMediaPlayer}");
-                // Unsubscribe from the last media player we were connected to.
-                Broker.RemoveDelegate(
-                    connectedMediaPlayer.FeedbackKey,
-                    SendHardwareMediaPlayerCrpcFbToUi);
-                connectedMediaPlayer = null;
+                return;
             }
+
+            CwsDebugPage.LogNotice($"UI instance {instanceId} is disconnecting from Media Player {connectedMediaPlayer}");
+            // Unsubscribe from the last media player we were connected to.
+            Broker.RemoveDelegate(
+                connectedMediaPlayer.FeedbackKey,
+                SendHardwareMediaPlayerCrpcFbToUi);
+            connectedMediaPlayer = null;
         }
 
         /// <summary>
@@ -419,14 +465,14 @@ namespace Masters2026Nax
             var sourceChangeMessage = CRPC.GetSourceChangeMessage(
                 instanceId,
                 NaxSourceConfiguration.GetMediaPlayerSrc(mediaPlayer));
-            CwsDebugPage.LogNotice($"CRPC Message: {sourceChangeMessage}");
+            CwsDebugPage.LogNotice($"CRPC Source Change Message: {sourceChangeMessage}");
 
             // The Construct Media Player object needs this connection information
             // before it can exchange CRPC messages with the NAX Media Player.
             myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(sourceChangeMessage);
 
             myContract.MediaControl.MediaPlayer.MediaPlayer_Offline(false);
-            myContract.MediaControl.MediaPlayer.MediaPlayer_Player_Name("TEST");
+            myContract.MediaControl.MediaPlayer.MediaPlayer_Player_Name(mediaPlayer.ToString());
 
             // MediaPlayerId is a record, so == compares HardwareId and PlayerNumber.
             if (mediaPlayer == connectedMediaPlayer)
@@ -447,6 +493,7 @@ namespace Masters2026Nax
                 mediaPlayer.FeedbackKey,
                 SendHardwareMediaPlayerCrpcFbToUi);
 
+            // Store the connected media player so we can unsubscribe from it later.
             connectedMediaPlayer = mediaPlayer;
         }
 
@@ -463,11 +510,11 @@ namespace Masters2026Nax
         {
             if (connectedMediaPlayer == null)
             {
-                CwsDebugPage.LogNotice($"UI instance {instanceId} received a CRPC message from the Construct Media Player, but no media player is currently connected. Message ignored.");
+                CwsDebugPage.LogInfo($"UI instance {instanceId} received a CRPC message from the Construct Media Player, but no media player is currently connected. Message ignored: {e.SigArgs.Sig.StringValue}");
                 return;
             }
 
-            CwsDebugPage.LogNotice($"UI instance {instanceId} is sending CRPC message from Construct Media Player to {connectedMediaPlayer}: {e.SigArgs.Sig.StringValue}");
+            CwsDebugPage.LogInfo($"UI instance {instanceId} is sending CRPC message from Construct Media Player to {connectedMediaPlayer}: {e.SigArgs.Sig.StringValue}");
 
             // CRPC from the touchpanel is simply passed into the Message Broker.
             var delivered = Broker.SendMessage(

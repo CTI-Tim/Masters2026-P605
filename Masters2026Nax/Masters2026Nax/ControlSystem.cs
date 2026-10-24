@@ -136,7 +136,7 @@ namespace Masters2026Nax
             myOtherXpanel = new UI(0x04, this);
             CwsDebugPage.LogInfo("Other TP Registered");
 
-            Hardware = new HardwareSetup(this);
+            Hardware = new HardwareSetup(this, "Nax1");
             CwsDebugPage.LogInfo("Hardware Setup Complete");
             // It can seem silly to put the above debug statements in but it gives real info when failures occour.
             // If we do not see those messages then  the class above it failed
