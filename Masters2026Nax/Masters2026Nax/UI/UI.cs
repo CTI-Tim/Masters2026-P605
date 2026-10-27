@@ -303,7 +303,7 @@ namespace Masters2026Nax
                 myContract.Main.VisibilityJoin(false);
 
                 // Clear the last connected media player so we can reconnect if needed.
-                connectedMediaPlayer = null;
+                UnsubscribeFromLastMediaPlayer();
             }
         }
 
