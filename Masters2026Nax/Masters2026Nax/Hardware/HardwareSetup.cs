@@ -6,6 +6,7 @@ using Masters2026Nax.Configuration;
 using Masters2026NaxPanel.MediaControl;
 using MessageBroker;
 using System;
+using System.Text;
 
 namespace Masters2026Nax.Hardware
 {
@@ -109,10 +110,31 @@ namespace Masters2026Nax.Hardware
                 if (args.Sig.Number > 0 && args.Sig.Number <= 4)
                 {
                     MediaPlayerId mediaPlayer = new MediaPlayerId(myNaxamp.HardwareId, (ushort)args.Sig.Number);
+
+                    // Replace non-printable characters with a dash for logging and
+                    // testing purposes.  The behavior doesn't seem to be any different
+                    // but I can say I've ruled it out as a potential cause of a problem.
+                    //StringBuilder msg = new StringBuilder();
+                    //foreach (char c in args.Sig.StringValue)
+                    //{
+                    //    if (c < 0x20 || c > 0x7F)
+                    //    {
+                    //        msg.Append("-");
+                    //    }
+                    //    else
+                    //    {
+                    //        msg.Append(c);
+                    //    }
+                    //}
+
                     CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC Fb from EISC to {mediaPlayer}: {args.Sig.StringValue}");
-                    Broker.SendMessage(
+
+                    var delivered = Broker.SendMessage(
                         mediaPlayer.FeedbackKey,
                         new Message { Serial = args.Sig.StringValue });
+
+                    // False means no UI is subscribed to this player right now.
+                    CwsDebugPage.LogNotice($"HardwareSetup: CRPC Fb for {mediaPlayer} delivered to a UI subscriber: {delivered}");
                 }
             }
         }

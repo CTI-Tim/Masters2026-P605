@@ -44,7 +44,17 @@ namespace Masters2026Nax.Crpc
         /// </summary>
         private readonly Action<string> SendCrpcFbToUi;
 
-        private void ForwardCrpcFbToUi(Message m) => SendCrpcFbToUi(m.Serial);
+        /// <summary>
+        /// Forwards a CRPC feedback message to the UI.  This gives us a consistent 
+        /// object to pass to the broker for subscribing and unsubscribing.
+        /// </summary>
+        /// <param name="m">Message containing the serial Crcp message to forward.</param>
+        private void ForwardCrpcFbToUi(Message m)
+        {
+            CwsDebugPage.LogInfo($"UI instance {instanceId} is forwarding CRPC Fb from {connectedMediaPlayer} to the Construct Media Player: {m.Serial}");
+
+            SendCrpcFbToUi(m.Serial);
+        }
 
         // Give the Media Players time to exchange the source change messages.
         private const int sourceChangeSettleTimeInMs = 200;
