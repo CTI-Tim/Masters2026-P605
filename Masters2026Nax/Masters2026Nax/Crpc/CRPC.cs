@@ -2,7 +2,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Masters2026Nax
+namespace Masters2026Nax.Crpc
 {
     public static class CRPC
     {
