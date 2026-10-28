@@ -67,7 +67,7 @@ namespace Masters2026Nax
             // Main Page Setup
             // ---------------------------------------------------------------------
 
-            myContract.Main.RoomLabel_Indirect($"Masters 2026 C# for NAX [{myXpanel.ID:X2}]");
+            myContract.Main.RoomLabel_Indirect($"Masters 2026 C# for NAX [0x{myXpanel.ID:X2}]");
             myContract.Main.Output1Label_Indirect("NaxAmp Out 1");
             myContract.Main.Output2Label_Indirect("NaxAmp Out 2");
             myContract.Main.Output3Label_Indirect("Bluetooth Out");
@@ -230,7 +230,7 @@ namespace Masters2026Nax
         {
             if (e.SigArgs.Sig.BoolValue)
             {
-                CwsDebugPage.LogNotice($"UI instance {myXpanel.ID:X2} is returning from the Media Player page and unsubscribing from the media player.");
+                CwsDebugPage.LogNotice($"UI [0x{myXpanel.ID:X2}] is returning from the Media Player page and unsubscribing from the media player.");
 
                 // This includes a delay to allow the media player to process
                 // the source change message before unsubscribing.
@@ -392,7 +392,7 @@ namespace Masters2026Nax
             ushort zone,
             ushort buttonIndex)
         {
-            CwsDebugPage.LogNotice($"UI instance {myXpanel.ID:X2} is selecting source button {buttonIndex} in zone {zone}");
+            CwsDebugPage.LogNotice($"UI [0x{myXpanel.ID:X2}] is selecting source button {buttonIndex} in zone {zone}");
 
             if (NaxSourceConfiguration.IsMediaPlayer(
                 zone,
@@ -404,8 +404,6 @@ namespace Masters2026Nax
                 myContract.MediaControl.VisibilityJoin(false);
 
                 var mediaPlayer = NaxSourceConfiguration.GetMediaPlayer(zone, buttonIndex);
-
-                CwsDebugPage.LogNotice($"UI instance {myXpanel.ID:X2} is connecting to Media Player {mediaPlayer}");
 
                 // Send the source change message to the Media Player
                 myCrpcMediaPlayerConnection.Connect(mediaPlayer);

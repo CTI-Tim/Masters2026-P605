@@ -24,7 +24,7 @@ namespace Masters2026Nax.Crpc
         /// This is used to identify the UI instance in CRPC messages sent to the UI's
         /// Media Player.
         /// </summary>
-        private ushort instanceId;
+        private readonly ushort instanceId;
 
         /// <summary>
         /// The media player this panel is connected to, or null if none.  Used to
@@ -36,16 +36,17 @@ namespace Masters2026Nax.Crpc
         /// This is the delegate that sends the source change message to the UI's
         /// Media Player.
         /// </summary>
-        private Action<string> SendMessageFbToUi;
+        private readonly Action<string> SendMessageFbToUi;
 
         /// <summary>
         /// This is the delegate that sends Crpc Fb messages from the hardware players
         /// to the UI's Media Player.
         /// </summary>
-        private Action<string> SendCrpcFbToUi;
+        private readonly Action<string> SendCrpcFbToUi;
+
+        private void ForwardCrpcFbToUi(Message m) => SendCrpcFbToUi(m.Serial);
 
         // Give the Media Players time to exchange the source change messages.
-        // 200ms is typical.
         private const int sourceChangeSettleTimeInMs = 200;
 
         /// <summary>
@@ -100,7 +101,7 @@ namespace Masters2026Nax.Crpc
 
             Broker.AddDelegate(
                 mediaPlayer.FeedbackKey,
-                message => SendCrpcFbToUi(message.Serial));
+                ForwardCrpcFbToUi);
 
             // Store the connected media player so we can unsubscribe from it later.
             connectedMediaPlayer = mediaPlayer;
@@ -112,11 +113,16 @@ namespace Masters2026Nax.Crpc
         /// from the previous media player.
         /// </summary>
         /// <remarks>Exceptions are caught and logged to avoid propagating disconnect failures.</remarks>
-        /// <returns>A task that represents the asynchronous disconnect operation.</returns>
         public async Task DisconnectAsync()
         {
             try
             {
+                if (connectedMediaPlayer == null)
+                {
+                    CwsDebugPage.LogInfo($"UI instance {instanceId} is not connected to a media player.  No disconnect action taken.");
+                    return;
+                }
+
                 var player = connectedMediaPlayer;
 
                 SendMessageFbToUi(CRPC.GetSourceChangeMessage(instanceId, 0));
@@ -136,16 +142,18 @@ namespace Masters2026Nax.Crpc
                 {
                     UnsubscribeFromLastMediaPlayer();
                 }
+
             }
             catch (Exception e)
             {
                 CwsDebugPage.LogError($"UI instance {instanceId} failed to disconnect from the media player: {e}");
             }
-
-            return;
         }
 
-
+        /// <summary>
+        /// Send the Crpc payload from the panel to the associated player.
+        /// </summary>
+        /// <param name="crpcPayload">The Crpc message from the panel.</param>
         public void SendCommand(string crpcPayload)
         {
             if (connectedMediaPlayer == null)
@@ -186,12 +194,9 @@ namespace Masters2026Nax.Crpc
             CwsDebugPage.LogNotice($"UI instance {instanceId} is unsubscribing from Media Player {connectedMediaPlayer.FeedbackKey}");
             Broker.RemoveDelegate(
                 connectedMediaPlayer.FeedbackKey,
-                message => SendCrpcFbToUi(message.Serial));
+                ForwardCrpcFbToUi);
 
             connectedMediaPlayer = null;
         }
-
-
-
     }
 }
