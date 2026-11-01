@@ -246,7 +246,7 @@ namespace Masters2026Nax.Crpc
         {
             if (uiInstance == 0)
             {
-                CwsDebugPage.LogError($"CRPC.GetSourceChangeMessage({uiInstance},{source}).  UI instance must be greater than 0.  Message not generated.");
+                CwsDebugPage.LogError($"GetSourceChangeMessage({uiInstance},{source}).  UI instance must be greater than 0.  Message not generated.");
                 return string.Empty;
             }
 

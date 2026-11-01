@@ -51,6 +51,9 @@ namespace Masters2026Nax.Hardware
         private NaxBluetooth myBtIo;
         //private NaxIO myIo;
 
+        /// <summary>
+        /// Represents the CRPC hardware connection used by the instance.
+        /// </summary>
         private CrpcHardwareConnection myCrpcHardwareConnection;
 
         // Testing EISC client.
@@ -71,10 +74,13 @@ namespace Masters2026Nax.Hardware
             // ---------------------------------------------------------------------
             myNaxamp = new NaxAmp(0x10, naxHardwareId, cs);
             myNaxamp.ZoneFeedbackChanged += MyNaxamp_ZoneFeedbackChanged;
-            myNaxamp.CrpcMessageReceived += NaxAmp_CrpcMessageReceived;
 
             Broker.AddDelegate("Zone1Source", Zone1SourceSelect);
             Broker.AddDelegate("Zone2Source", Zone2SourceSelect);
+
+            // #########################################################################
+            // Media Player CRPC
+            // #########################################################################
 
             // Test code for use with EISC client and Bluesound player.
             myEiscClient = new ThreeSeriesTcpIpEthernetIntersystemCommunications(0xC0, "127.0.0.2", cs);
@@ -90,7 +96,7 @@ namespace Masters2026Nax.Hardware
             // it to 8 since we know how many there are.
             ushort naxPlayerCount = 8;
             myCrpcHardwareConnection = new CrpcHardwareConnection(
-                naxHardwareId, 
+                myNaxamp.HardwareId, 
                 naxPlayerCount,
                 (player, msg) =>
                 {
@@ -100,6 +106,14 @@ namespace Masters2026Nax.Hardware
                     myEiscClient.StringInput[player].StringValue = msg;
                 });
 
+            // CRPC feedback from the amp's players goes out through this amp's
+            // connection.  Subscribe after the connection exists so early feedback
+            // can't arrive before there is somewhere to send it.  This is never
+            // removed, so a lambda is fine (see CrpcHardwareConnection).
+            myNaxamp.CrpcMessageReceived += (sender, e) =>
+            {
+                myCrpcHardwareConnection.SendFeedback((ushort)e.Player, e.CRPCMessage);
+            };
 
             // -------------------------------------------------------------------
             // NAX BTIO
@@ -277,23 +291,6 @@ namespace Masters2026Nax.Hardware
             Broker.SendMessage($"Zone3VolumeFb",
                     new Message { Analog = e.VolumeFb });
             
-        }
-
-
-        // #########################################################################
-        // Media Player CRPC
-        // #########################################################################
-
-        /// <summary>
-        /// CRPC feedback came from a NAX amp player.
-        /// </summary>
-        /// <param name="sender">The NaxAmp that received the feedback.</param>
-        /// <param name="e">The player number and CRPC text.</param>
-        private void NaxAmp_CrpcMessageReceived(
-            object? sender,
-            NaxAmp.CrpcMessageEventArgs e)
-        {
-            myCrpcHardwareConnection.SendFeedback((ushort)e.Player, e.CRPCMessage);
         }
     }
 }

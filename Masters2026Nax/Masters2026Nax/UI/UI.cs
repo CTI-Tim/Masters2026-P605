@@ -280,10 +280,11 @@ namespace Masters2026Nax
             }
             else
             {
-                // The panel is offline, so we can't send a source-change message to the
-                // media player.  Even so, disconnect from the last media player to clean
-                // up.  The panel won't start back up on the media player page, so
-                // the next source change that needs it will sync up at that time.
+                // The panel is offline, so a source-change message sent to the media
+                // player won't be received.  Even so, disconnect from the last media
+                // player to clean up.  The panel won't start back up on the media
+                // player page, so the next source change that needs it will sync up
+                // at that time.
                 _ = myCrpcMediaPlayerConnection.DisconnectAsync();
             }
         }
