@@ -36,7 +36,7 @@ namespace Masters2026Nax
         private Contract myContract;
 
         /// <summary>
-        /// This manages the Crpc message routing between the UI's Media Player
+        /// This manages the CRPC message routing between the UI's Media Player
         /// and the hardware based players (sources).
         /// </summary>
         private CrpcUiConnection myCrpcMediaPlayerConnection;

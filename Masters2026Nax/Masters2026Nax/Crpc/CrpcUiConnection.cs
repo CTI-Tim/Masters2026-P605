@@ -3,14 +3,21 @@
 using CwsDebug;
 using Masters2026Nax.Configuration;
 using MessageBroker;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Masters2026Nax.Crpc
 {
+    /// <summary>
+    /// Manages CRPC communication between a UI media player instance and hardware 
+    /// media players, including source selection, command forwarding, feedback 
+    /// routing, and subscription lifecycle.
+    /// </summary>
+    /// <remarks>Assigns a unique instance identifier per UI connection, sends 
+    /// source-change messages to keep the UI media player synchronized, subscribes
+    /// and unsubscribes broker delegates when the connected media player changes,
+    /// and supports asynchronous disconnect with a short settle delay to reduce
+    /// connectivity issues with the CH5 media player.</remarks>
     public class CrpcUiConnection
     {
         /// <summary>
@@ -36,27 +43,18 @@ namespace Masters2026Nax.Crpc
         /// This is the delegate that sends the source change message to the UI's
         /// Media Player.
         /// </summary>
-        private readonly Action<string> SendMessageFbToUi;
+        private readonly Action<string> sendMessageFbToUi;
 
         /// <summary>
         /// This is the delegate that sends Crpc Fb messages from the hardware players
         /// to the UI's Media Player.
         /// </summary>
-        private readonly Action<string> SendCrpcFbToUi;
+        private readonly Action<string> sendCrpcFbToUi;
 
         /// <summary>
-        /// Forwards a CRPC feedback message to the UI.  This gives us a consistent 
-        /// object to pass to the broker for subscribing and unsubscribing.
+        /// Give the Media Players time to exchange the source change messages.
+        /// 200ms is typical.
         /// </summary>
-        /// <param name="m">Message containing the serial Crcp message to forward.</param>
-        private void ForwardCrpcFbToUi(Message m)
-        {
-            CwsDebugPage.LogInfo($"UI instance {instanceId} is forwarding CRPC Fb from {connectedMediaPlayer} to the Construct Media Player: {m.Serial}");
-
-            SendCrpcFbToUi(m.Serial);
-        }
-
-        // Give the Media Players time to exchange the source change messages.
         private const int sourceChangeSettleTimeInMs = 200;
 
         /// <summary>
@@ -71,8 +69,20 @@ namespace Masters2026Nax.Crpc
         {
             instanceId = ++instanceCount;
 
-            SendMessageFbToUi = sendMessageFbToUi;
-            SendCrpcFbToUi = sendCrpcFbToUi;
+            this.sendMessageFbToUi = sendMessageFbToUi;
+            this.sendCrpcFbToUi = sendCrpcFbToUi;
+        }
+
+        /// <summary>
+        /// Forwards a CRPC feedback message to the UI.  This gives us a consistent 
+        /// object to pass to the broker for subscribing and unsubscribing.
+        /// </summary>
+        /// <param name="m">Message containing the serial Crcp message to forward.</param>
+        private void ForwardCrpcFbToUi(Message m)
+        {
+            CwsDebugPage.LogInfo($"UI instance {instanceId} is forwarding CRPC Fb from {connectedMediaPlayer} to the Construct Media Player: {m.Serial}");
+
+            sendCrpcFbToUi(m.Serial);
         }
 
         /// <summary>
@@ -86,7 +96,7 @@ namespace Masters2026Nax.Crpc
         /// <param name="mediaPlayer">The media player to connect to.</param>
         public void Connect(MediaPlayerId mediaPlayer)
         {
-            var sourceChangeMessage = CRPC.GetSourceChangeMessage(
+            var sourceChangeMessage = GetSourceChangeMessage(
                 instanceId,
                 NaxSourceConfiguration.GetMediaPlayerSrc(mediaPlayer));
             CwsDebugPage.LogNotice($"CRPC Source Change Message: {sourceChangeMessage}");
@@ -94,7 +104,7 @@ namespace Masters2026Nax.Crpc
 
             // The Construct Media Player object needs this connection information
             // before it can exchange CRPC messages with the NAX Media Player.
-            SendMessageFbToUi(sourceChangeMessage);
+            sendMessageFbToUi(sourceChangeMessage);
 
             // MediaPlayerId is a record, so == compares HardwareId and PlayerNumber.
             if (mediaPlayer == connectedMediaPlayer)
@@ -106,6 +116,17 @@ namespace Masters2026Nax.Crpc
 
             UnsubscribeFromLastMediaPlayer();
 
+            // Store the connected media player so we can unsubscribe from it later.
+            connectedMediaPlayer = mediaPlayer;
+
+            // If mediaPlayer is null, the UI is not connecting to a media player.  Move
+            // on without subscribing.
+            if (mediaPlayer == null)
+            {
+                CwsDebugPage.LogInfo($"UI instance {instanceId} is not connecting to a media player.  No subscription action taken.");
+                return;
+            }
+
             // Subscribe to the Hardware Media Player's CRPC feedback.  The feedback
             // is sent to the UI through the broker and then forwarded to the UI's
             // Media Player object.
@@ -116,9 +137,6 @@ namespace Masters2026Nax.Crpc
                 mediaPlayer.FeedbackKey,
                 ForwardCrpcFbToUi);
             CwsDebugPage.LogNotice($"UI instance {instanceId} connected to {mediaPlayer.FeedbackKey}");
-
-            // Store the connected media player so we can unsubscribe from it later.
-            connectedMediaPlayer = mediaPlayer;
         }
 
         /// <summary>
@@ -140,7 +158,7 @@ namespace Masters2026Nax.Crpc
 
                 var player = connectedMediaPlayer;
 
-                SendMessageFbToUi(CRPC.GetSourceChangeMessage(instanceId, 0));
+                sendMessageFbToUi(GetSourceChangeMessage(instanceId, 0));
 
                 // Send the source change message to the Media Player while
                 // the subpage is still open so it can process the message.
@@ -166,9 +184,9 @@ namespace Masters2026Nax.Crpc
         }
 
         /// <summary>
-        /// Send the Crpc payload from the panel to the associated player.
+        /// Send the CRPC payload from the panel to the associated player.
         /// </summary>
-        /// <param name="crpcPayload">The Crpc message from the panel.</param>
+        /// <param name="crpcPayload">The CRPC message from the panel.</param>
         public void SendCommand(string crpcPayload)
         {
             if (connectedMediaPlayer == null)
@@ -212,6 +230,61 @@ namespace Masters2026Nax.Crpc
                 ForwardCrpcFbToUi);
 
             connectedMediaPlayer = null;
+        }
+
+        /// <summary>
+        /// Creates a JSON-serialized source change message for the specified UI instance and source.  This message must be sent to the UI's MediaPlayer_Message_FB input every time the source changes.
+        /// </summary>
+        /// <param name="uiInstance">The identifier of the UI instance.  Must be greater than 0.  If 0, an empty string is returned and an error is logged.</param>
+        /// <param name="source">The identifier of the source.</param>
+        /// <returns>A JSON string representing SourceChangeMessage for the specified UI instance and source.</returns>
+        private string GetSourceChangeMessage(ushort uiInstance, ushort source)
+        {
+            var properties = new SourceChangeMessage(uiInstance, source);
+            return JsonSerializer.Serialize(properties);
+
+            // Returns a message like: {"ver":"4.0.0","tag":"02","src":"3"}
+        }
+
+        /// <summary>
+        /// Properties for a source-change message sent to the hardware media player (streamer) instance.
+        /// </summary>
+        /// <remarks>These properties are serialized to JSON.  The names are case-sensitive, so we set the JsonPropertyName attributes accordingly.</remarks>
+        private sealed class SourceChangeMessage
+        {
+            /// <summary>
+            /// Payload schema version in semantic versioning (SemVer) format.
+            /// </summary>
+            /// <remarks>Defaults to "4.0.0". Treated as a static identifier for the message or schema
+            /// version; changing it may break something.</remarks>
+            [JsonPropertyName("ver")]
+            public string Ver { get; } = "4.0.0";
+
+            /// <summary>
+            /// Identifier for the UI player requesting the source change.
+            /// </summary>
+            /// <remarks>Two-digit, zero-padded numeric string (for example, "01", "10"); value must
+            /// be greater than "00".</remarks>
+            [JsonPropertyName("tag")]
+            public string Tag { get; }
+
+            /// <summary>
+            /// Identifier for the selected source.
+            /// </summary>
+            /// <remarks>Must be changed whenever the user switches sources.</remarks>
+            [JsonPropertyName("src")]
+            public string Src { get; }
+
+            /// <summary>
+            /// Initializes a new instance of SourceChangeMessage with the specified instance, source, and default ver value.
+            /// </summary>
+            /// <param name="uiInstance">The instance number used to identify which UI's Media Player requested the change.  This is formatted as a two-digit decimal string.</param>
+            /// <param name="source">The source identifier.  This is converted to a decimal string.</param>
+            public SourceChangeMessage(ushort uiInstance, ushort source)
+            {
+                this.Tag = uiInstance.ToString("D2");
+                this.Src = source.ToString();
+            }
         }
     }
 }

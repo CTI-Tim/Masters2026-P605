@@ -51,7 +51,7 @@ namespace Masters2026Nax.Hardware
         private NaxBluetooth myBtIo;
         //private NaxIO myIo;
 
-        private CrpcFbConnection myCrpcFbConnection;
+        private CrpcHardwareConnection myCrpcFbConnection;
 
         // Testing EISC client.
         private ThreeSeriesTcpIpEthernetIntersystemCommunications myEiscClient;
@@ -73,7 +73,12 @@ namespace Masters2026Nax.Hardware
             myNaxamp.ZoneFeedbackChanged += MyNaxamp_ZoneFeedbackChanged;
             myNaxamp.CrpcMessageReceived += NaxAmp_CrpcMessageReceived;
 
-            myCrpcFbConnection = new CrpcFbConnection(naxHardwareId, 8, (player, msg) => SendCrpcToStreamer(player, msg));
+            // A more flexible approach is to read the number of streamers from the
+            // NaxAmp or other device-specific class, but for now we will hardcode
+            // it to 8.
+            ushort naxPlayerCount = 8;
+            myCrpcFbConnection = new CrpcHardwareConnection(naxHardwareId, naxPlayerCount, 
+                (player, msg) => SendCrpcToHardware(player, msg));
 
             Broker.AddDelegate("Zone1Source", Zone1SourceSelect);
             Broker.AddDelegate("Zone2Source", Zone2SourceSelect);
@@ -115,30 +120,9 @@ namespace Masters2026Nax.Hardware
                 {
                     MediaPlayerId mediaPlayer = new MediaPlayerId(myNaxamp.HardwareId, (ushort)args.Sig.Number);
 
-                    // Replace non-printable characters with a dash for logging and
-                    // testing purposes.  The behavior doesn't seem to be any different
-                    // but I can say I've ruled it out as a potential cause of a problem.
-                    //StringBuilder msg = new StringBuilder();
-                    //foreach (char c in args.Sig.StringValue)
-                    //{
-                    //    if (c < 0x20 || c > 0x7F)
-                    //    {
-                    //        msg.Append("-");
-                    //    }
-                    //    else
-                    //    {
-                    //        msg.Append(c);
-                    //    }
-                    //}
-
                     CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC Fb from EISC to {mediaPlayer}: {args.Sig.StringValue}");
 
-                    var delivered = Broker.SendMessage(
-                        mediaPlayer.FeedbackKey,
-                        new Message { Serial = args.Sig.StringValue });
-
-                    // False means no UI is subscribed to this player right now.
-                    CwsDebugPage.LogNotice($"HardwareSetup: CRPC Fb for {mediaPlayer} delivered to a UI subscriber: {delivered}");
+                    myCrpcFbConnection.SendFeedback((ushort)args.Sig.Number, args.Sig.StringValue);
                 }
             }
         }
@@ -292,7 +276,7 @@ namespace Masters2026Nax.Hardware
         /// </summary>
         /// <param name="playerNumber">The streaming player number on the NAX amp.</param>
         /// <param name="crpcMessage">The CRPC message.</param>
-        private void SendCrpcToStreamer(ushort playerNumber, string crpcMessage)
+        private void SendCrpcToHardware(ushort playerNumber, string crpcMessage)
         {
             CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC from UI to {playerNumber}: {crpcMessage}");
 
@@ -303,7 +287,7 @@ namespace Masters2026Nax.Hardware
         }
 
         /// <summary>
-        /// CRPC feedback came from a NAX amp streamer.
+        /// CRPC feedback came from a NAX amp player.
         /// </summary>
         /// <param name="sender">The NaxAmp that received the feedback.</param>
         /// <param name="e">The player number and CRPC text.</param>
@@ -311,14 +295,7 @@ namespace Masters2026Nax.Hardware
             object? sender,
             NaxAmp.CrpcMessageEventArgs e)
         {
-            // Use the sender instead of myNaxamp, so this one handler can be
-            // used with multiple NAX amps in the system.  If this event were
-            // raised by a different class, it will simply ignore it.  If the
-            // types match, we continue.
-            if (sender is not NaxAmp amp)
-                return;
-
-            myCrpcFbConnection.SendFeedback(e.Player, e.CRPCMessage);
+            myCrpcFbConnection.SendFeedback((ushort)e.Player, e.CRPCMessage);
         }
     }
 }
