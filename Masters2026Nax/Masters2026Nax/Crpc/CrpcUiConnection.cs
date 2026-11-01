@@ -1,5 +1,5 @@
-﻿#nullable disable
-
+﻿// Nullable checking stays on here (see ControlSystem.cs). This class uses no
+// Crestron types, and null has a real meaning: "no media player connected".
 using CwsDebug;
 using Masters2026Nax.Configuration;
 using MessageBroker;
@@ -37,7 +37,7 @@ namespace Masters2026Nax.Crpc
         /// The media player this panel is connected to, or null if none.  Used to
         /// send CRPC to the right player and to unsubscribe from the message broker.
         /// </summary>
-        private MediaPlayerId connectedMediaPlayer = null;
+        private MediaPlayerId? connectedMediaPlayer = null;
 
         /// <summary>
         /// This is the delegate that sends the source change message to the UI's
@@ -93,12 +93,16 @@ namespace Masters2026Nax.Crpc
         /// subscribes to the new player's CRPC feedback via the broker, and 
         /// updates connectedMediaPlayer. If mediaPlayer equals the current one,
         /// no unsubscribe/subscribe is performed.</remarks>
-        /// <param name="mediaPlayer">The media player to connect to.</param>
-        public void Connect(MediaPlayerId mediaPlayer)
+        /// <param name="mediaPlayer">The media player to connect to.  Null indicates no media player and sends a source of 0.</param>
+        public void Connect(MediaPlayerId? mediaPlayer)
         {
+            // Get the source for the media player.  If mediaPlayer is null, src
+            // is 0.
+            ushort src = mediaPlayer == null ? (ushort)0 : NaxSourceConfiguration.GetMediaPlayerSrc(mediaPlayer);
+
             var sourceChangeMessage = GetSourceChangeMessage(
                 instanceId,
-                NaxSourceConfiguration.GetMediaPlayerSrc(mediaPlayer));
+                src);
             CwsDebugPage.LogNotice($"CRPC Source Change Message: {sourceChangeMessage}");
 
 
@@ -240,6 +244,12 @@ namespace Masters2026Nax.Crpc
         /// <returns>A JSON string representing SourceChangeMessage for the specified UI instance and source.</returns>
         private string GetSourceChangeMessage(ushort uiInstance, ushort source)
         {
+            if (uiInstance == 0)
+            {
+                CwsDebugPage.LogError($"CRPC.GetSourceChangeMessage({uiInstance},{source}).  UI instance must be greater than 0.  Message not generated.");
+                return string.Empty;
+            }
+
             var properties = new SourceChangeMessage(uiInstance, source);
             return JsonSerializer.Serialize(properties);
 
@@ -247,7 +257,7 @@ namespace Masters2026Nax.Crpc
         }
 
         /// <summary>
-        /// Properties for a source-change message sent to the hardware media player (streamer) instance.
+        /// Properties for a source-change message sent to the UI's media player instance.
         /// </summary>
         /// <remarks>These properties are serialized to JSON.  The names are case-sensitive, so we set the JsonPropertyName attributes accordingly.</remarks>
         private sealed class SourceChangeMessage

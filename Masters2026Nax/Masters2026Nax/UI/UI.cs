@@ -115,12 +115,10 @@ namespace Masters2026Nax
             Broker.AddDelegate("Zone2VolumeFb", Zone2SetVolumeFb);
             Broker.AddDelegate("Zone3VolumeFb", Zone3SetVolumeFb);
 
-            // The Media Player CRPC feedback is sent to the UI through the broker.
-            // The UI then forwards it to the Construct Media Player object.  This
-            // subscription is added dynamically when the user selects a source that
-            // represents a NAX Media Player and removed when the user selects a
-            // different source.
-
+            // The CrpcUiConnection class handles the CRPC message processing and
+            // routing between the UI's Media Player instance and the hardware.
+            // It also sends the source change message to the UI so it knows to
+            // sync up with the current hardware player.
             myCrpcMediaPlayerConnection = new CrpcUiConnection(
                 message => myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(message),
                 crpc => myContract.MediaControl.MediaPlayer.MediaPlayer_CRPC_FB(crpc));
@@ -283,7 +281,7 @@ namespace Masters2026Nax
             else
             {
                 // The panel is offline, so we can't send a source-change message to the
-                // media player.  Just unsubscribe from the last media player to clean
+                // media player.  Even so, disconnect from the last media player to clean
                 // up.  The panel won't start back up on the media player page, so
                 // the next source change that needs it will sync up at that time.
                 _ = myCrpcMediaPlayerConnection.DisconnectAsync();

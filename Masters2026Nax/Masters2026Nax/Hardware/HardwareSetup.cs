@@ -51,7 +51,7 @@ namespace Masters2026Nax.Hardware
         private NaxBluetooth myBtIo;
         //private NaxIO myIo;
 
-        private CrpcHardwareConnection myCrpcFbConnection;
+        private CrpcHardwareConnection myCrpcHardwareConnection;
 
         // Testing EISC client.
         private ThreeSeriesTcpIpEthernetIntersystemCommunications myEiscClient;
@@ -73,15 +73,33 @@ namespace Masters2026Nax.Hardware
             myNaxamp.ZoneFeedbackChanged += MyNaxamp_ZoneFeedbackChanged;
             myNaxamp.CrpcMessageReceived += NaxAmp_CrpcMessageReceived;
 
-            // A more flexible approach is to read the number of streamers from the
-            // NaxAmp or other device-specific class, but for now we will hardcode
-            // it to 8.
-            ushort naxPlayerCount = 8;
-            myCrpcFbConnection = new CrpcHardwareConnection(naxHardwareId, naxPlayerCount, 
-                (player, msg) => SendCrpcToHardware(player, msg));
-
             Broker.AddDelegate("Zone1Source", Zone1SourceSelect);
             Broker.AddDelegate("Zone2Source", Zone2SourceSelect);
+
+            // Test code for use with EISC client and Bluesound player.
+            myEiscClient = new ThreeSeriesTcpIpEthernetIntersystemCommunications(0xC0, "127.0.0.2", cs);
+            myEiscClient.SigChange += MyEiscClient_SigChange;
+            myEiscClient.Register();
+
+            // Set up the CRPC hardware connection to forward commands from the
+            // UI to the NAX amplifier's players and to send feedback from those
+            // back to the UI.
+            //
+            // A more flexible approach is to read the number of players from the
+            // NaxAmp or other device-specific class, but for now we will hardcode
+            // it to 8 since we know how many there are.
+            ushort naxPlayerCount = 8;
+            myCrpcHardwareConnection = new CrpcHardwareConnection(
+                naxHardwareId, 
+                naxPlayerCount,
+                (player, msg) =>
+                {
+                    myNaxamp.SendCrpc(player, msg);
+
+                    // Test code for use with EISC client and Bluesound player.
+                    myEiscClient.StringInput[player].StringValue = msg;
+                });
+
 
             // -------------------------------------------------------------------
             // NAX BTIO
@@ -104,11 +122,6 @@ namespace Masters2026Nax.Hardware
             Broker.AddDelegate("Zone2Volume", Zone2VolumeSet);
             Broker.AddDelegate("Zone3Volume", Zone3VolumeSet);
 
-            // Test code for use with EISC client and Bluesound player.
-            myEiscClient = new ThreeSeriesTcpIpEthernetIntersystemCommunications(0xC0, "127.0.0.2", cs);
-            myEiscClient.SigChange += MyEiscClient_SigChange;
-            myEiscClient.Register();
-
         }
 
         // Test code for use with EISC client and Bluesound player.
@@ -122,7 +135,7 @@ namespace Masters2026Nax.Hardware
 
                     CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC Fb from EISC to {mediaPlayer}: {args.Sig.StringValue}");
 
-                    myCrpcFbConnection.SendFeedback((ushort)args.Sig.Number, args.Sig.StringValue);
+                    myCrpcHardwareConnection.SendFeedback((ushort)args.Sig.Number, args.Sig.StringValue);
                 }
             }
         }
@@ -272,21 +285,6 @@ namespace Masters2026Nax.Hardware
         // #########################################################################
 
         /// <summary>
-        /// Forwards a CRPC message received from a UI to the specific media player.
-        /// </summary>
-        /// <param name="playerNumber">The streaming player number on the NAX amp.</param>
-        /// <param name="crpcMessage">The CRPC message.</param>
-        private void SendCrpcToHardware(ushort playerNumber, string crpcMessage)
-        {
-            CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC from UI to {playerNumber}: {crpcMessage}");
-
-            myNaxamp.SendCrpc(playerNumber, crpcMessage);
-
-            // Test code for use with EISC client and Bluesound player.
-            myEiscClient.StringInput[playerNumber].StringValue = crpcMessage;
-        }
-
-        /// <summary>
         /// CRPC feedback came from a NAX amp player.
         /// </summary>
         /// <param name="sender">The NaxAmp that received the feedback.</param>
@@ -295,7 +293,7 @@ namespace Masters2026Nax.Hardware
             object? sender,
             NaxAmp.CrpcMessageEventArgs e)
         {
-            myCrpcFbConnection.SendFeedback((ushort)e.Player, e.CRPCMessage);
+            myCrpcHardwareConnection.SendFeedback((ushort)e.Player, e.CRPCMessage);
         }
     }
 }

@@ -54,18 +54,20 @@ namespace Masters2026Nax.Crpc
             {
                 var mediaPlayer = new MediaPlayerId(hardwareId, playerNumber);
 
-                // We cannot simply use playerNumber in the lambda below because it will
-                // be included by reference.  When the lamba is ultimately called,
-                // long after the loop completes, playerNumber will have the value of
-                // playerCount + 1, which is not what we want.  This is a common issue
-                // when using lambdas.
+                // We cannot use playerNumber in the lambda below because it will be
+                // captured as a single variable for all instances in the loop, not
+                // its current value.  When the lambda is ultimately called, long after
+                // the loop completes, playerNumber has the value of playerCount + 1,
+                // which is not what we want.  This is a common issue when using
+                // lambdas within FOR loops.  FOREACH loops do not have this problem
+                // because the loop variable is scoped to each iteration.
                 //
                 // The solution is to use local variables inside the loop and use those
-                // in the lambda.  This ensures that each lambda has its own instance
-                // of the variable and not a shared one.  mediaPlayer.PlayerNumber is a
-                // property of the local variable, and takes the place of the loop
-                // variable in the lambda.  This is a common pattern in C# when using
-                // lambdas in loops.
+                // in the lambda.  This ensures that each lambda has its own, locally
+                // scoped instance of the variable and not a shared one.
+                // mediaPlayer.PlayerNumber is a property of the local variable, and
+                // takes the place of the loop variable in the lambda.  This is a
+                // common pattern in C# when using lambdas in FOR loops.
                 //
                 // If this delegate ever needed to be removed, we would need to use
                 // a named method instead of a lambda.  Since each streaming player
