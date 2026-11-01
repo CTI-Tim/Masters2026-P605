@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Masters2026Nax.Crpc
 {
-    public class CrpcMediaPlayerConnection
+    public class CrpcUiConnection
     {
         /// <summary>
         /// Tracks the number of times this class has been instantiated.
@@ -60,12 +60,14 @@ namespace Masters2026Nax.Crpc
         private const int sourceChangeSettleTimeInMs = 200;
 
         /// <summary>
-        /// Initializes a new instance of the <c>CrpcMediaPlayerConnection</c> class.
+        /// Initializes a new instance of the <c>CrpcUiConnection</c> class.
+        /// Create one instance per panel (if it has an IP ID and Media Player in the UI,
+        /// it should have its own instance of this class).
         /// </summary>
         /// <remarks></remarks>
         /// <param name="sendMessageFbToUi">Callback used to send message feedback to the UI to change sources.</param>
         /// <param name="sendCrpcFbToUi">Callback used to send CRPC feedback to the UI from the hardware-based players.</param>
-        public CrpcMediaPlayerConnection(Action<string> sendMessageFbToUi, Action<string> sendCrpcFbToUi)
+        public CrpcUiConnection(Action<string> sendMessageFbToUi, Action<string> sendCrpcFbToUi)
         {
             instanceId = ++instanceCount;
 
@@ -107,11 +109,13 @@ namespace Masters2026Nax.Crpc
             // Subscribe to the Hardware Media Player's CRPC feedback.  The feedback
             // is sent to the UI through the broker and then forwarded to the UI's
             // Media Player object.
-            CwsDebugPage.LogNotice($"UI instance {instanceId} is subscribing to {mediaPlayer.FeedbackKey}");
-
+            //
+            // We cannot use a lambda here because we need to be able to unsubscribe
+            // from the broker later.  The delegate must be a named method.
             Broker.AddDelegate(
                 mediaPlayer.FeedbackKey,
                 ForwardCrpcFbToUi);
+            CwsDebugPage.LogNotice($"UI instance {instanceId} connected to {mediaPlayer.FeedbackKey}");
 
             // Store the connected media player so we can unsubscribe from it later.
             connectedMediaPlayer = mediaPlayer;
@@ -122,7 +126,8 @@ namespace Masters2026Nax.Crpc
         /// waits briefly for those messages to be exchanged, then unsubscribes
         /// from the previous media player.
         /// </summary>
-        /// <remarks>Exceptions are caught and logged to avoid propagating disconnect failures.</remarks>
+        /// <remarks>Exceptions are caught and logged to avoid propagating disconnect 
+        /// failures.</remarks>
         public async Task DisconnectAsync()
         {
             try

@@ -3,6 +3,7 @@ using Crestron.SimplSharpPro.EthernetCommunication;
 using CwsDebug;
 //using Masters2026;
 using Masters2026Nax.Configuration;
+using Masters2026Nax.Crpc;
 using Masters2026NaxPanel.MediaControl;
 using MessageBroker;
 using System;
@@ -50,6 +51,8 @@ namespace Masters2026Nax.Hardware
         private NaxBluetooth myBtIo;
         //private NaxIO myIo;
 
+        private CrpcFbConnection myCrpcFbConnection;
+
         // Testing EISC client.
         private ThreeSeriesTcpIpEthernetIntersystemCommunications myEiscClient;
 
@@ -69,7 +72,8 @@ namespace Masters2026Nax.Hardware
             myNaxamp = new NaxAmp(0x10, naxHardwareId, cs);
             myNaxamp.ZoneFeedbackChanged += MyNaxamp_ZoneFeedbackChanged;
             myNaxamp.CrpcMessageReceived += NaxAmp_CrpcMessageReceived;
-            ConnectMediaPlayersToBroker(myNaxamp);
+
+            myCrpcFbConnection = new CrpcFbConnection(naxHardwareId, 8, (player, msg) => SendCrpcToStreamer(player, msg));
 
             Broker.AddDelegate("Zone1Source", Zone1SourceSelect);
             Broker.AddDelegate("Zone2Source", Zone2SourceSelect);
@@ -284,59 +288,22 @@ namespace Masters2026Nax.Hardware
         // #########################################################################
 
         /// <summary>
-        /// Subscribes every media player on a NAX streaming amp to incoming CRPC 
-        /// commands from the UI(s).  Each player gets its own key, which allows 
-        /// the broker to route the message to the correct player.
-        /// 
-        /// These subscriptions are created at startup and remain as long as the
-        /// program is running, ensuring that the players are always ready to 
-        /// receive CRPC commands from the UI.
-        /// </summary>
-        /// <param name="amp">The NAX amp whose players should listen for CRPC.</param>
-        private void ConnectMediaPlayersToBroker(NaxAmp amp)
-        {
-            for (ushort playerNumber = 1; playerNumber <= 8; playerNumber++)
-            {
-                // Let's get a MediaPlayerId for each player on the 8zsa.  This
-                // helps us create a consistent way of identifying players, which 
-                // becomes more important when we have multiple amps that could lead
-                // to players with overlapping numbers in a system.
-                var mediaPlayer = new MediaPlayerId(amp.HardwareId, playerNumber);
-
-                // mediaPlayer.CommandKey resolves to "MediaPlayer[Nax1.Player#]Crpc"
-
-                // The broker message only carries the CRPC text, so each player gets
-                // its own small handler that remembers which player it belongs to.
-                // foreach gives every pass its own mediaPlayer variable, so each
-                // lambda sends to its own player.
-                Broker.AddDelegate(
-                    mediaPlayer.CommandKey,
-                    m => SendCrpcToPlayer(amp, mediaPlayer, m));
-
-                CwsDebugPage.LogNotice($"{mediaPlayer} is listening for CRPC on {mediaPlayer.CommandKey}");
-            }
-        }
-
-        /// <summary>
         /// Forwards a CRPC message received from a UI to the specific media player.
         /// </summary>
-        /// <param name="amp">The NAX amp hosting the player.</param>
-        /// <param name="mediaPlayer">The player the message is for.</param>
-        /// <param name="m">The CRPC message. m.Serial holds the CRPC text.</param>
-        private void SendCrpcToPlayer(NaxAmp amp, MediaPlayerId mediaPlayer, Message m)
+        /// <param name="playerNumber">The streaming player number on the NAX amp.</param>
+        /// <param name="crpcMessage">The CRPC message.</param>
+        private void SendCrpcToStreamer(ushort playerNumber, string crpcMessage)
         {
-            CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC from UI to {mediaPlayer}: {m.Serial}");
+            CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC from UI to {playerNumber}: {crpcMessage}");
 
-            amp.SendCrpc(mediaPlayer.PlayerNumber, m.Serial);
+            myNaxamp.SendCrpc(playerNumber, crpcMessage);
 
             // Test code for use with EISC client and Bluesound player.
-            myEiscClient.StringInput[mediaPlayer.PlayerNumber].StringValue = m.Serial;
+            myEiscClient.StringInput[playerNumber].StringValue = crpcMessage;
         }
 
         /// <summary>
-        /// CRPC feedback came from a NAX amp. Put it on the broker so any UI
-        /// connected to that player can consume it without needing to know
-        /// anything about NaxAmp.
+        /// CRPC feedback came from a NAX amp streamer.
         /// </summary>
         /// <param name="sender">The NaxAmp that received the feedback.</param>
         /// <param name="e">The player number and CRPC text.</param>
@@ -347,20 +314,11 @@ namespace Masters2026Nax.Hardware
             // Use the sender instead of myNaxamp, so this one handler can be
             // used with multiple NAX amps in the system.  If this event were
             // raised by a different class, it will simply ignore it.  If the
-            // types match, we turn sender into a local variable so we can get
-            // its HardwareId.
+            // types match, we continue.
             if (sender is not NaxAmp amp)
                 return;
 
-            var mediaPlayer = new MediaPlayerId(amp.HardwareId, (ushort)e.Player);
-
-            // mediaPlayer.FeedbackKey resolves to "MediaPlayer[Nax1.Player#]CrpcFb"
-
-            // SendMessage returns false when no UI has this player open. That is
-            // normal, so there is nothing to log.
-            Broker.SendMessage(
-                mediaPlayer.FeedbackKey,
-                new Message { Serial = e.CRPCMessage });
+            myCrpcFbConnection.SendFeedback(e.Player, e.CRPCMessage);
         }
     }
 }

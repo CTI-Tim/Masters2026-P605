@@ -39,7 +39,7 @@ namespace Masters2026Nax
         /// This manages the Crpc message routing between the UI's Media Player
         /// and the hardware based players (sources).
         /// </summary>
-        private CrpcMediaPlayerConnection myCrpcMediaPlayerConnection;
+        private CrpcUiConnection myCrpcMediaPlayerConnection;
 
 
         // #########################################################################
@@ -121,7 +121,7 @@ namespace Masters2026Nax
             // represents a NAX Media Player and removed when the user selects a
             // different source.
 
-            myCrpcMediaPlayerConnection = new CrpcMediaPlayerConnection(
+            myCrpcMediaPlayerConnection = new CrpcUiConnection(
                 message => myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(message),
                 crpc => myContract.MediaControl.MediaPlayer.MediaPlayer_CRPC_FB(crpc));
 
@@ -385,7 +385,7 @@ namespace Masters2026Nax
         /// </summary>
         /// <remarks>Updates the Construct Media Player connection state (clears
         /// offline and sets the player name).  All of the Crpc setup operations
-        /// are handled by the <see cref="CrpcMediaPlayerConnection"/> class.</remarks>
+        /// are handled by the <see cref="CrpcUiConnection"/> class.</remarks>
         /// <param name="zone">The output zone the request is for.</param>
         /// <param name="buttonIndex">The button index from the list of sources.</param>
         private void ConnectAndOpenMediaPlayerSource(
@@ -418,7 +418,7 @@ namespace Masters2026Nax
         }
 
         /// <summary>
-        /// Handle CRPC messages from the UI.  The CrpcMediaPlayerConnection class
+        /// Handle CRPC messages from the UI.  The CrpcUiConnection class
         /// handles the actual CRPC message processing and sending to the hardware
         /// media player.
         /// </summary>

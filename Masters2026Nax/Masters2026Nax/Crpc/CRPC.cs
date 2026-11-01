@@ -1,5 +1,6 @@
 ﻿using CwsDebug;
 using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Masters2026Nax.Crpc
@@ -21,13 +22,15 @@ namespace Masters2026Nax.Crpc
             }
 
             var properties = new CRPCSourceChangeProperties(uiInstance, source);
-            return System.Text.Json.JsonSerializer.Serialize(properties);
+            return JsonSerializer.Serialize(properties);
+
+            // Returns a message like: {"ver":"4.0.0","tag":"02","src":"3"}
         }
 
         /// <summary>
-        /// Properties for a source-change message sent to the hardware media player instance.
+        /// Properties for a source-change message sent to the hardware media player (streamer) instance.
         /// </summary>
-        /// <remarks>These properties are serialized to JSON and sent to the hardware media player instance.  The names are case-sensitive, so we set the JsonPropertyName attributes accordingly.</remarks>
+        /// <remarks>These properties are serialized to JSON.  The names are case-sensitive, so we set the JsonPropertyName attributes accordingly.</remarks>
         private sealed class CRPCSourceChangeProperties
         {
             /// <summary>
