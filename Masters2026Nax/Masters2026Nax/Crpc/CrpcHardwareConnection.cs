@@ -23,6 +23,19 @@ namespace Masters2026Nax.Crpc
         private readonly string hardwareId;
 
         /// <summary>
+        /// This tracks every hardwareId given to this class.  We refer to it
+        /// during instantiation to ensure each instance has a unique identifier.
+        /// If a duplicate is detected, an exception is thrown to prevent the
+        /// program from starting up in a configuration that would cause CRPC
+        /// messages to be routed incorrectly.
+        /// 
+        /// This ignores case in order to reject near-duplicates like "Nax1" 
+        /// and "nax1" which would be confusing, even though the broker would
+        /// treat them as distinct keys.
+        /// </summary>
+        private static readonly HashSet<string> usedHardwareIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
         /// This is the delegate that sends CRPC messages from the UI to the
         /// individual hardware players.
         /// </summary>
@@ -47,6 +60,12 @@ namespace Masters2026Nax.Crpc
         /// <param name="sendCrpcToHardware">Callback used to send CRPC commands to the hardware streamer from the UIs.</param>
         public CrpcHardwareConnection(string hardwareId, ushort playerCount, Action<ushort, string> sendCrpcToHardware)
         {
+            // HashSet.Add returns false if the value is already there.
+            if (!usedHardwareIds.Add(hardwareId))
+            {
+                throw new ArgumentException($"A CrpcHardwareConnection with hardwareId '{hardwareId}' already exists or a case-insensitive match (near-duplicate) was detected.");
+            }
+
             this.hardwareId = hardwareId;
             this.sendCrpcToHardware = sendCrpcToHardware;
 
