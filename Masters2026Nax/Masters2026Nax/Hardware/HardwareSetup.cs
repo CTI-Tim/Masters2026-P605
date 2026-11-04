@@ -56,9 +56,6 @@ namespace Masters2026Nax.Hardware
         /// </summary>
         private CrpcHardwareConnection myCrpcHardwareConnection;
 
-        // Testing EISC client.
-        private ThreeSeriesTcpIpEthernetIntersystemCommunications myEiscClient;
-
         /// <summary>
         /// Initializes the hardware setup by creating and configuring NAX devices, 
         /// subscribing to feedback events, connecting media players, and registering 
@@ -82,11 +79,6 @@ namespace Masters2026Nax.Hardware
             // Media Player CRPC
             // #########################################################################
 
-            // Test code for use with EISC client and Bluesound player.
-            myEiscClient = new ThreeSeriesTcpIpEthernetIntersystemCommunications(0xC0, "127.0.0.2", cs);
-            myEiscClient.SigChange += MyEiscClient_SigChange;
-            myEiscClient.Register();
-
             // Set up the CRPC hardware connection to forward commands from the
             // UI to the NAX amplifier's players and to send feedback from those
             // back to the UI.
@@ -101,9 +93,6 @@ namespace Masters2026Nax.Hardware
                 (player, msg) =>
                 {
                     myNaxamp.SendCrpc(player, msg);
-
-                    // Test code for use with EISC client and Bluesound player.
-                    myEiscClient.StringInput[player].StringValue = msg;
                 });
 
             // CRPC feedback from the amp's players goes out through this amp's
@@ -136,22 +125,6 @@ namespace Masters2026Nax.Hardware
             Broker.AddDelegate("Zone2Volume", Zone2VolumeSet);
             Broker.AddDelegate("Zone3Volume", Zone3VolumeSet);
 
-        }
-
-        // Test code for use with EISC client and Bluesound player.
-        private void MyEiscClient_SigChange(Crestron.SimplSharpPro.DeviceSupport.BasicTriList currentDevice, Crestron.SimplSharpPro.SigEventArgs args)
-        {
-            if (args.Sig.Type == Crestron.SimplSharpPro.eSigType.String)
-            {
-                if (args.Sig.Number > 0 && args.Sig.Number <= 4)
-                {
-                    MediaPlayerId mediaPlayer = new MediaPlayerId(myNaxamp.HardwareId, (ushort)args.Sig.Number);
-
-                    CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC Fb from EISC to {mediaPlayer}: {args.Sig.StringValue}");
-
-                    myCrpcHardwareConnection.SendFeedback((ushort)args.Sig.Number, args.Sig.StringValue);
-                }
-            }
         }
 
         // ---------------------------------------------------------------------
