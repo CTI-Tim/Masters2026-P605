@@ -34,23 +34,33 @@ tell which side is misconfigured.
 
 ---
 
+## 0. Introduction
+
+**Bullets**
+- [segue] Now that you've seen how to select NAX audio sources and tie button event handlers into the generated contracts, we need to enable control of the NAX streaming media players.
+- We are going to walk through two new classes you can use with one or more touchpanels and one or more streaming media players.
+
+---
+
 ## 1. The problem (0:00–0:03)
 
 **Key points**
-- The Media Player on the panel and the player in the NAX don't talk to each other directly. Our program passes messages between them.
-- The messages are **CRPC** strings. We don't need to read or understand them. We just deliver them to the right place.
+- The CH5 Media Player on the panel and the players in the NAX don't talk to each other directly. Our program passes messages between them.
+- The messages are **CRPC** strings, which are simply JSON formatted data that go back and forth. We don't need to read or understand them. We just deliver them to the right place.
 - Three jobs: tell the panel's media player **the source changed**, commands **in**, feedback **out**.
 
-**Say:** "Your job isn't to understand CRPC. Your job is to be a good mail carrier."
+**Say:** "Your job isn't to understand CRPC. Your job is to be a good telephone switchboard operator."
 
-**Transition:** "Before these two classes existed, that mail-carrier code was mixed into the button handlers in `UI.cs`. Now it has two homes."
+**Transition:** "Rather than mix this switchboard code into the `NaxAmp`, `HardwareSetup`, and `UI` classes, we use two new classes to tie it all together."
+
+**Check for understanding:** "What previously covered class comes to mind when I mention `telephone switchboard`?"  (*The `Broker` class.*)
 
 ---
 
 ## 2. Communication flow (0:03–0:08)
 
-**Draw the diagram** (How-To §2). Build it up top to bottom while talking:
-1. Panel at the top, NAX on the bottom.
+**Draw the diagram** (How-To §2). Build it from left to right while talking:
+1. Panel on the left, NAX on the right.
 2. `CrpcUiConnection` next to the panel ("one per panel").
 3. `CrpcHardwareConnection` next to the streaming media player hardware ("one per DM-NAX-8ZSA").
 4. Message Broker in the middle with two arrows: **command key →** and **← feedback key**.
@@ -58,10 +68,10 @@ tell which side is misconfigured.
 **Key points**
 - The two classes **never know about each other.** They only meet at the broker.
 - **Hardware side:** subscribes at startup and never lets go. It's always listening.
-- **UI side:** subscribes only while the user is looking at a player. It switches when the user switches players.
+- **UI side:** subscribes only while the user is looking at a player. It switches when the user switches players. It disconnects when the user closes the media player.
 - Two panels on the same player both get the feedback. That's intended and matches SIMPL.
 
-**Check for understanding:** "If I add a physical panel, which side of the diagram gets a new box?" (*The UI side. One new `CrpcUiConnection`.*)
+**Check for understanding:** "If I add a panel, which side of the diagram gets a new box?" (*The UI side. One new `CrpcUiConnection`.*)
 
 ---
 
