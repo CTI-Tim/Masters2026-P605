@@ -38,8 +38,10 @@ namespace Masters2026Nax.Crpc
         /// Implement this by forwarding to the device-specific class (for
         /// example, NaxAmp.SendCrpc).
         /// </summary>
-        /// <param name="playerNumber">1-based player number on this hardware (1 through the playerCount given to the constructor).</param>
-        /// <param name="crpcPayload">Serialized CRPC message, forwarded as received.  Do not modify it.</param>
+        /// <param name="playerNumber">1-based player number on this hardware 
+        /// (1 through the playerCount given to the constructor).</param>
+        /// <param name="crpcPayload">Serialized CRPC message, forwarded as 
+        /// received.  Do not modify it.</param>
         public delegate void SendCrpcToHardware(ushort playerNumber, string crpcPayload);
 
         /// <summary>
@@ -82,9 +84,12 @@ namespace Masters2026Nax.Crpc
         /// program is running, ensuring that the players are always ready to 
         /// receive CRPC commands from the UI.
         /// </summary>
-        /// <param name="hardwareId">Hardware identifier used to create the NAX amplifier instance.  Must be unique.</param>
+        /// <param name="hardwareId">Hardware identifier used to create the NAX 
+        /// amplifier instance.  Must be unique.</param>
         /// <param name="playerCount">The number of streaming players on the hardware.</param>
-        /// <param name="sendCrpcToHardware">Callback that forwards a UI's CRPC command to the given hardware player.  See <see cref="SendCrpcToHardware"/> for the argument meanings and the class example for a sample lambda.</param>
+        /// <param name="sendCrpcToHardware">Callback that forwards a UI's CRPC 
+        /// command to the given hardware player.  See <see cref="SendCrpcToHardware"/> 
+        /// for the argument meanings and the class example for a sample lambda.</param>
         public CrpcHardwareConnection(string hardwareId, ushort playerCount, SendCrpcToHardware sendCrpcToHardware)
         {
             // HashSet.Add returns false if the value is already there.
@@ -132,7 +137,8 @@ namespace Masters2026Nax.Crpc
         /// the broker so any UI connected to that player can consume it without 
         /// needing to know anything about NaxAmp.
         /// </summary>
-        /// <param name="playerNumber">Identifies the media player whose feedback channel generated the message.</param>
+        /// <param name="playerNumber">Identifies the media player whose feedback 
+        /// channel generated the message.</param>
         /// <param name="crpcPayload">Contains the serialized CRPC payload to send.</param>
         public void SendFeedback(ushort playerNumber, string crpcPayload)
         {
