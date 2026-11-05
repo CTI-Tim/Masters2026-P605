@@ -24,7 +24,7 @@ tell which side is misconfigured.
 | Time | Segment | Format |
 |---|---|---|
 | 0:00–0:03 | 1. The problem | Talk |
-| 0:03–0:08 | 2. The big picture: two classes and a broker | Whiteboard |
+| 0:03–0:08 | 2. Communication flow: two classes and a broker | Whiteboard |
 | 0:08–0:11 | 3. `MediaPlayerId`: the address | Code |
 | 0:11–0:15 | 4. Hardware side | Code |
 | 0:15–0:22 | 5. UI side | Code + live demo |
@@ -39,7 +39,7 @@ tell which side is misconfigured.
 **Key points**
 - The Media Player on the panel and the player in the NAX don't talk to each other directly. Our program passes messages between them.
 - The messages are **CRPC** strings. We don't need to read or understand them. We just deliver them to the right place.
-- Three jobs: commands **in**, feedback **out**, and telling the panel **which source** it's on.
+- Three jobs: tell the panel's media player **the source changed**, commands **in**, feedback **out**.
 
 **Say:** "Your job isn't to understand CRPC. Your job is to be a good mail carrier."
 
@@ -47,12 +47,12 @@ tell which side is misconfigured.
 
 ---
 
-## 2. The big picture (0:03–0:08)
+## 2. Communication flow (0:03–0:08)
 
-**Draw the diagram** (How-To §2). Build it up left to right while talking:
-1. Panel on the left, NAX on the right.
+**Draw the diagram** (How-To §2). Build it up top to bottom while talking:
+1. Panel at the top, NAX on the bottom.
 2. `CrpcUiConnection` next to the panel ("one per panel").
-3. `CrpcHardwareConnection` next to the NAX ("one per NAX").
+3. `CrpcHardwareConnection` next to the streaming media player hardware ("one per DM-NAX-8ZSA").
 4. Message Broker in the middle with two arrows: **command key →** and **← feedback key**.
 
 **Key points**
@@ -61,7 +61,7 @@ tell which side is misconfigured.
 - **UI side:** subscribes only while the user is looking at a player. It switches when the user switches players.
 - Two panels on the same player both get the feedback. That's intended and matches SIMPL.
 
-**Check for understanding:** "If I add a third panel, which side of the diagram gets a new box?" (*The UI side. One new `CrpcUiConnection`.*)
+**Check for understanding:** "If I add a physical panel, which side of the diagram gets a new box?" (*The UI side. One new `CrpcUiConnection`.*)
 
 ---
 
@@ -130,8 +130,8 @@ tell which side is misconfigured.
 
 Pick these three. The rest are in the handout (How-To §9).
 
-**a. Callbacks (`Action<T>`), about 1.5 min**
-- "Here's a method; call it when you need to send." That's all an `Action` is.
+**a. Callbacks (named delegates), about 1.5 min**
+- "Here's a method; call it when you need to send." That's all a delegate is. We give each callback a name (`SendCrpcToHardware`, `SendMessageFbToUi`, `SendCrpcFbToUi`) so IntelliSense shows what the arguments mean.
 - That's why neither class mentions `NaxAmp` or the Construct contract.
 
 **b. Lambda vs. named method, about 1.5 min**
@@ -171,8 +171,8 @@ Pick these three. The rest are in the handout (How-To §9).
 | "What's `src`, and where does it come from?" | The Media Player's source number. `NaxSourceConfiguration` hands them out (1, 2, 3…) in the order players are added. 0 means none. Don't hard-code them. |
 | "What's the `tag`?" | Each panel's `CrpcUiConnection` instance number, assigned in the order panels are created. You don't set it. |
 | "Can I use this with a non-Crestron player?" | Yes. Pass a callback that sends to that device, and call `SendFeedback` from its feedback event. If it numbers players from 0, translate in the callback. |
-| "Why 200 ms?" | It was found by testing. It's long enough for the panel to process the source change. |
-| "Why not just make one big class?" | The hardware lives as long as the program; panel connections come and go. Different lifetimes, different classes. |
+| "Why 200 ms?" | It was found by testing. It's long enough for the panel to process the source change. We don't break the "100ms Rule" for instantaneous feedback because the button feedback changes immediately. |
+| "Why not just make one big class?" | Don't make classes bigger than necessary. The hardware lives as long as the program; panel connections come and go. Different lifetimes, different classes. |
 
 ---
 
@@ -181,3 +181,4 @@ Pick these three. The rest are in the handout (How-To §9).
 1. Add a third panel at IP ID `0x05`. Confirm in the log that it gets `tag` 03.
 2. Add "Media Player 3" (`new MediaPlayerId("Nax1", 3)`) to zones 1 and 2. Confirm that it gets its own `src` number and that both panels can control it.
 3. Break it on purpose: change `"Nax1"` to `"nax1"` in one `MediaPlayerId`. Predict the log message before you run it. (*Hint: the broker keys are case-sensitive, even though the duplicate-ID check isn't.*)
+4. Add logic to the `CrpcUiConnection` class to trigger DisconnectAsync() whenever a program stopping event is raised.

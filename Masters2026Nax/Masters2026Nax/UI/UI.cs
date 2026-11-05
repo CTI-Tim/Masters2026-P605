@@ -119,6 +119,9 @@ namespace Masters2026Nax
             // routing between the UI's Media Player instance and the hardware.
             // It also sends the source change message to the UI so it knows to
             // sync up with the current hardware player.
+            //
+            // The two lambdas implement CrpcUiConnection.SendMessageFbToUi and
+            // CrpcUiConnection.SendCrpcFbToUi.
             myCrpcMediaPlayerConnection = new CrpcUiConnection(
                 message => myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(message),
                 crpc => myContract.MediaControl.MediaPlayer.MediaPlayer_CRPC_FB(crpc));

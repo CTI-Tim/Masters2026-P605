@@ -9,53 +9,78 @@
 
 ## 1. What these classes are for
 
-The CH5 **Media Player** object on a touch panel does not talk to the NAX directly.
+The CH5 **Media Player** object on a touch panel does not talk to the NAX streaming media players directly.
 Your program sits in the middle and has to do three things:
 
-1. Pass **CRPC commands** from the panel's Media Player to the right hardware player.
-2. Pass **CRPC feedback** from that hardware player back to every panel that's watching it.
-3. Tell the panel's Media Player **which source it's looking at** (the "source-change message").
+1. Tell the panel's Media Player **the source has changed and to start talking to the new source** (the "source-change message").
+2. Pass **CRPC commands** from the panel's Media Player to the right hardware player.
+3. Pass **CRPC feedback** from that hardware player back to every panel that's watching it.
 
 Two classes split this work. Each one handles one end of the conversation:
 
 | Class | Where you create it | How many | What it does |
 |---|---|---|---|
-| `CrpcHardwareConnection` | `HardwareSetup` | **One per media server** (one per NAX) | Listens for commands for each of the hardware's players and publishes their feedback |
-| `CrpcUiConnection` | `UI` | **One per panel** that has a Media Player | Connects the panel to one player at a time, forwards commands, receives feedback, sends source-change messages |
+| `CrpcHardwareConnection` | `HardwareSetup` | **One per media server** (one per device with one or more streaming media players, e.g. _DM-NAX-8ZSA_) | Listens for commands for each of the hardware's players and publishes their feedback |
+| `CrpcUiConnection` | `UI` | **One per panel** that has a CH5 Media Player object | Connects the panel to one player at a time, forwards commands, receives feedback, sends source-change messages |
 
 The two classes **never reference each other.** They only share the Message Broker
 keys, and those keys come from `MediaPlayerId`.
 
 ---
 
-## 2. The big picture
+## 2. Communication flow
 
-```
- TOUCH PANEL                         PROGRAM                                          NAX
- (CH5 Media Player)
+```mermaid
+flowchart TD
+    subgraph PANEL["TOUCH PANEL"]
+        direction LR
+        TP_SOURCE_SELECT["User selects media player source"]
+        subgraph MP["CH5 Media Player"]
+            MP_MSG_FB["MediaPlayer_Message_FB<br/>(source-change JSON)"]
+            MP_CRPC["MediaPlayer_CRPC<br/>(user interactions, requests, responses)"]
+            MP_CRPC_FB["MediaPlayer_CRPC_FB<br/>(menu info, track title, art...)"]
+        end
+    end
 
- MediaPlayer_CRPC  ───────────►  CrpcUiConnection.SendCommand()
-   (user presses Play)                │
-                                      │  Broker key: MediaPlayer[Nax1.Player1]Crpc
-                                      ▼
-                                 CrpcHardwareConnection  ─────────────────────►  NaxAmp.SendCrpc()
-                                 (subscribed at startup, forever)
+    subgraph PROGRAM["PROGRAM"]
+        direction TD
+        subgraph UiClass["CrpcUiConnection()"]
+            UiConn["CrpcUiConnection.Connect() / DisconnectAsync() - subscribe and unsubscribe to <b>FeedbackKey</b>"]
+            UiSend["CrpcUiConnection.SendCommand()"]
+            UiFwd["CrpcUiConnection<br/>(private ForwardCrpcFbToUi)"]
+        end
+        subgraph HwClass["CrpcHardwareConnection()"]
+            HwConn["CrpcHardwareConnection<br/>(subscribed to all <b>CommandKey</b>s at startup, forever)"]
+            HwFb["CrpcHardwareConnection.SendFeedback()"]
+        end
+    end
 
- MediaPlayer_CRPC_FB ◄─────────  CrpcUiConnection (private ForwardCrpcFbToUi)
-   (track title, art...)              ▲
-                                      │  Broker key: MediaPlayer[Nax1.Player1]CrpcFb
-                                      │  (subscribed ONLY while connected)
-                                 CrpcHardwareConnection.SendFeedback()  ◄──────  NaxAmp.CrpcMessageReceived
+    subgraph NAX["NAX Streaming Hardware"]
+        direction TD
+        NaxSend["NaxAmp.SendCrpc()"]
+        NaxRecv["NaxAmp.CrpcMessageReceived"]
+    end
 
- MediaPlayer_Message_FB ◄──────  CrpcUiConnection.Connect() / DisconnectAsync()
-   (source-change JSON)
+    %% Command path: panel -> NAX
+    MP_CRPC --> UiSend
+    UiSend -->|"Broker (<b>CommandKey</b>): MediaPlayer[Nax1.Player1]Crpc"| HwConn
+    HwConn --> NaxSend
+
+    %% Feedback path: NAX -> panel
+    NaxRecv --> HwFb
+    HwFb -->|"Broker (<b>FeedbackKey</b>): MediaPlayer[Nax1.Player1]CrpcFb<br/>(subscribed ONLY while connected)"| UiFwd
+    UiFwd --> MP_CRPC_FB
+
+    %% Source-change message
+    TP_SOURCE_SELECT --> UiConn
+    UiConn --> MP_MSG_FB
 ```
 
 Three things to remember:
 
 - **The hardware side is always listening.** `CrpcHardwareConnection` subscribes to every
   player's command key in its constructor and never unsubscribes.
-- **The UI side subscribes only while connected.** `CrpcUiConnection` subscribes to one player's
+- **The UI side subscribes only while connected to a player.** `CrpcUiConnection` subscribes to one player's
   feedback key when you call `Connect`. It unsubscribes when you connect to a different player or
   call `DisconnectAsync`.
 - **Every panel connected to the same player receives the same feedback.** This is intentional
@@ -75,9 +100,9 @@ var player = new MediaPlayerId("Nax1", 1);   // Player 1 on the hardware called 
 |---|---|---|
 | `HardwareId` | `"Nax1"` | Must match the hardware ID given to `CrpcHardwareConnection` |
 | `PlayerNumber` | `1` | Which player on that hardware |
-| `CommandKey` | `"MediaPlayer[Nax1.Player1]Crpc"` | UI **sends** here; hardware **listens** here |
-| `FeedbackKey` | `"MediaPlayer[Nax1.Player1]CrpcFb"` | Hardware **sends** here; UI **listens** here |
-| `ToString()` | `"Nax1.Player1"` | Logs, and the player name shown on the panel |
+| `CommandKey` | `"MediaPlayer[Nax1.Player1]Crpc"` | UI **sends** to this key; hardware **listens** to this key |
+| `FeedbackKey` | `"MediaPlayer[Nax1.Player1]CrpcFb"` | Hardware **sends** to this key; UI **listens** to this key |
+| `ToString()` | `"Nax1.Player1"` | Log messages, and the player name shown on the panel |
 
 Why it matters to you:
 
@@ -87,7 +112,7 @@ Why it matters to you:
   are equal (`==` returns `true`). `CrpcUiConnection` uses this to tell whether you're reconnecting
   to the player you're already on.
 - **A blank `HardwareId` throws `ArgumentException` at startup.** That's on purpose: it's better to
-  fail at boot than to have CRPC quietly go nowhere later.
+  fail quickly and loudly than to have CRPC quietly go nowhere later.
 
 You give each media-player source its `MediaPlayerId` in `ControlSystem.SetupNaxSources()`:
 
@@ -119,16 +144,56 @@ myCrpcHardwareConnection = new CrpcHardwareConnection(
 | Parameter | Type | What to pass |
 |---|---|---|
 | `hardwareId` | `string` | The same ID used in every `MediaPlayerId` for this hardware. **Must be unique**, and the check ignores case. |
-| `playerCount` | `ushort` | Number of players. Commands are registered for players `1` through `playerCount`. |
-| `sendCrpcToHardware` | `Action<ushort, string>` | A method or lambda that takes `(playerNumber, crpcPayload)` and sends it to the device. |
+| `playerCount` | `ushort` | Number of players. CommandKeys are registered for players `1` through `playerCount`. |
+| `sendCrpcToHardware` | `CrpcHardwareConnection.SendCrpcToHardware` | A method or lambda that takes `(playerNumber, crpcPayload)` and sends it to the device. |
 
 The class doesn't know what a `NaxAmp` is. You tell it how to talk to the hardware through the
 callback. That's why the same class can work with a different brand of player later.
 
+#### Writing the callback
+
+`SendCrpcToHardware` is a named delegate declared inside `CrpcHardwareConnection`:
+
+```csharp
+public delegate void SendCrpcToHardware(ushort playerNumber, string crpcPayload);
+```
+
+| Argument | Meaning |
+|---|---|
+| `playerNumber` | **1-based** player number on this hardware (1 through `playerCount`). |
+| `crpcPayload` | The serialized CRPC message from the panel. Forward it unchanged. |
+
+To write the lambda: hover over the constructor's third parameter in Visual Studio (or press
+`Ctrl+Shift+Space` while typing the call) to see the delegate's signature and docs. Your lambda
+needs to take those two arguments and hand them to whatever method on your device class sends CRPC.
+The parameter names in your lambda are up to you, but matching the delegate's names (`playerNumber`,
+`crpcPayload`) keeps the code easy to compare with the docs.
+
+```csharp
+(playerNumber, crpcPayload) =>
+{
+    myNaxamp.SendCrpc(playerNumber, crpcPayload);
+}
+```
+
+The same shape works as an expression-bodied lambda or a named method:
+
+```csharp
+// Expression-bodied lambda
+(playerNumber, crpcPayload) => myNaxamp.SendCrpc(playerNumber, crpcPayload)
+
+// Named method (method group), if the signature matches exactly
+private void SendToNax(ushort playerNumber, string crpcPayload) =>
+    myNaxamp.SendCrpc(playerNumber, crpcPayload);
+// ...
+new CrpcHardwareConnection(myNaxamp.HardwareId, 8, SendToNax);
+```
+
+The callback runs on the thread that delivers the UI's message, so keep it short and don't block.
+
 ### 4.2 Feed it the hardware's feedback
 
-Hook the device's CRPC feedback event to `SendFeedback`. Do this **after** the connection exists,
-so early feedback has somewhere to go:
+Hook the device's CRPC feedback event to `SendFeedback`.
 
 ```csharp
 myNaxamp.CrpcMessageReceived += (sender, e) =>
@@ -149,7 +214,7 @@ If no panel is connected to the player, the message is simply dropped. That's no
 - **Players are registered starting at 1.** If you add a device whose players are numbered from 0,
   translate in your callback (for example, `(player, msg) => device.Send(player - 1, msg)`), and
   translate back when you call `SendFeedback`.
-- **You never unsubscribe.** The hardware should always be ready for commands.
+- **Never unsubscribe to CommandKeys.** The hardware should always be ready for commands from the UI.
 
 ### 4.4 Example: adding a second NAX
 
@@ -169,7 +234,7 @@ myNaxamp2.CrpcMessageReceived += (sender, e) =>
 Then add its players as sources in `ControlSystem.SetupNaxSources()`:
 
 ```csharp
-NaxSourceConfiguration.AddSource(zone1, "Nax2 Player 1", 11, "", new MediaPlayerId("Nax2", 1));
+NaxSourceConfiguration.AddSource(zone1, "Media Player B2", 10, "", new MediaPlayerId("Nax2", 1));
 ```
 
 You don't need to change anything in `UI` or `CrpcUiConnection`.
@@ -190,11 +255,35 @@ myCrpcMediaPlayerConnection = new CrpcUiConnection(
 
 | Parameter | Type | What to pass |
 |---|---|---|
-| `sendMessageFbToUi` | `Action<string>` | Sends a string to the Media Player's **Message_FB** input |
-| `sendCrpcFbToUi` | `Action<string>` | Sends a string to the Media Player's **CRPC_FB** input |
+| `sendMessageFbToUi` | `CrpcUiConnection.SendMessageFbToUi` | Sends a string to the Media Player's **Message_FB** input |
+| `sendCrpcFbToUi` | `CrpcUiConnection.SendCrpcFbToUi` | Sends a string to the Media Player's **CRPC_FB** input |
 
-The class never touches the Construct contract. It only calls the two callbacks you hand it.
-That keeps generated contract types out of the CRPC code.
+The class doesn't need to reference the Construct contract. It only calls the two callbacks you give it, 
+which keeps the generated contract types out of the CRPC code.
+
+#### Writing the callbacks
+
+Both are named delegates declared inside `CrpcUiConnection`, each taking a single string:
+
+```csharp
+public delegate void SendMessageFbToUi(string message);      // source-change message (JSON)
+public delegate void SendCrpcFbToUi(string crpcPayload);     // CRPC feedback from the hardware player
+```
+
+Each lambda's only job is to write that string, unchanged, to the matching Media Player input in
+your panel's generated contract. In this project that's:
+
+```csharp
+message => myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(message)
+crpc    => myContract.MediaControl.MediaPlayer.MediaPlayer_CRPC_FB(crpc)
+```
+
+The two are easy to swap by accident, and the compiler can't tell because both take a `string`.
+**The first parameter is always the source-change channel (`Message_FB`); the second is always the
+CRPC channel (`CRPC_FB`).** If the Media Player never connects, check the order first.
+
+If your panel's contract names the Media Player differently (for example a second Media Player
+object, or a different contract path), only these lambdas change. `CrpcUiConnection` stays the same.
 
 Each instance assigns itself an instance ID (1, 2, 3…) in the order the panels are created. The
 Media Player uses that ID as the `tag` in the source-change message. You don't set it yourself.
@@ -275,9 +364,10 @@ else   // !args.DeviceOnLine
 
 ### 5.4 What `Connect` does, step by step
 
-1. Looks up the player's `src` number from `NaxSourceConfiguration` (or uses `0` if you pass `null`).
+1. Looks up the player's `src` number from `NaxSourceConfiguration` (or uses `0` if you pass `null`), 
+   which is used in the following step.
 2. Builds the source-change JSON, for example `{"ver":"4.0.0","tag":"01","src":"3"}`, and sends it
-   through `sendMessageFbToUi`. **This happens every time, even when reconnecting to the same player.**
+   through `sendMessageFbToUi`.
 3. If the player is the one you're already connected to, it stops here. There's no unsubscribe/resubscribe.
 4. Otherwise it unsubscribes from the old player's feedback, remembers the new player, and subscribes
    to the new player's `FeedbackKey`.
@@ -298,6 +388,8 @@ If the Media Player page closes before the panel processes the "src 0" message, 
 can end up in the wrong state. Then it may not connect properly the next time, especially to a
 different player. That's why the Return button **awaits** `DisconnectAsync` before the page flip,
 instead of using a hard-coded page flip in Construct.
+
+A future update to the CH5 Media Player may eliminate the need for this this workaround.
 
 ### 5.7 Adding another panel
 
@@ -327,12 +419,12 @@ Don't hard-code `src` numbers. Always let `GetMediaPlayerSrc` look them up.
 
 ## 7. Checklists
 
-### Adding a hardware media server
+### Adding a hardware streaming device
 
 - [ ] Create the device wrapper in `HardwareSetup` with a unique hardware ID.
 - [ ] Create one `CrpcHardwareConnection` with that ID, the player count, and a send callback.
-- [ ] Subscribe the device's CRPC feedback event to `SendFeedback`, **after** creating the connection.
-- [ ] Add each player as a source with `new MediaPlayerId("<same ID>", <player>)`.
+- [ ] Subscribe the device's CRPC feedback event to `SendFeedback`.
+- [ ] Add each streaming player as a source with `new MediaPlayerId("<same ID>", <player>)`.
 - [ ] Check the startup log for `<ID>.PlayerN is listening for CRPC on ...` for each player.
 
 ### Adding a panel
@@ -348,7 +440,7 @@ Don't hard-code `src` numbers. Always let `GetMediaPlayerSrc` look them up.
 | You see | Meaning | Fix |
 |---|---|---|
 | Startup `ArgumentException`: *A CrpcHardwareConnection with hardwareId 'X' already exists…* | Two hardware connections share an ID (case is ignored) | Give each device a unique ID |
-| Startup `ArgumentException`: *A media player needs a HardwareId…* | A `MediaPlayerId` was created with a blank ID | Fix the configuration in `SetupNaxSources()` |
+| Startup `ArgumentException`: *A media player needs a HardwareId…* | A `MediaPlayerId` was created with a blank hardware ID | Fix the configuration in `InitializeSystem()` (HardwareSetup instantiation) or `SetupNaxSources()` |
 | Error: *UI instance N: no hardware is listening for Nax2.Player1…* | The UI sent a command to a key with no subscriber | Check that the ID's spelling matches `HardwareSetup`, and that the player number is ≤ `playerCount` |
 | Info: *…received a CRPC message… but no media player is currently connected. Message ignored* | The panel sent CRPC while disconnected | Usually harmless (timing at page close). If constant, check that `Connect` is being called. |
 | Notice: *UI instance N connected to …CrpcFb*, but the panel's player stays blank | Probably `src` is 0 because the player wasn't added with `AddSource` | Add the player to the source configuration |
@@ -363,7 +455,7 @@ These are worth understanding before you change the code.
 
 | Idea | Where | Why it's used |
 |---|---|---|
-| **`Action<T>` callbacks** | Both constructors | The CRPC classes don't need to know about `NaxAmp` or the Construct contract. You pass in *how* to send. |
+| **Named delegate callbacks** (`SendCrpcToHardware`, `SendMessageFbToUi`, `SendCrpcFbToUi`) | Both constructors | The CRPC classes don't need to know about `NaxAmp` or the Construct contract. You pass in *how* to send. |
 | **Lambda vs. named method** | `CrpcHardwareConnection` uses a lambda; `CrpcUiConnection` uses `ForwardCrpcFbToUi` | You can only remove a delegate from the broker if you pass the **same** method again. Lambdas are fine for subscriptions that are never removed. |
 | **Lambda capture in a `for` loop** | `CrpcHardwareConnection` constructor | A lambda captures the *variable*, not its value. The loop copies the player number into a local (`mediaPlayer`) so each lambda gets its own copy. |
 | **`record` equality** | `MediaPlayerId` | `==` compares contents, so "is this the same player?" is one line. |

@@ -87,18 +87,24 @@ namespace Masters2026Nax.Hardware
             // NaxAmp or other device-specific class, but for now we will hardcode
             // it to 8 since we know how many there are.
             ushort naxPlayerCount = 8;
+
+            // The lambda below implements CrpcHardwareConnection.SendCrpcToHardware.
             myCrpcHardwareConnection = new CrpcHardwareConnection(
-                myNaxamp.HardwareId, 
+                myNaxamp.HardwareId,
                 naxPlayerCount,
-                (player, msg) =>
+                (playerNumber, crpcPayload) =>
                 {
-                    myNaxamp.SendCrpc(player, msg);
+                    myNaxamp.SendCrpc(playerNumber, crpcPayload);
+
+                    // If you want to confirm data from the UI is reaching this
+                    // point, you can uncomment the following line to log the
+                    // CRPC messages going to a specific player on the device.
+                    //CwsDebugPage.LogInfo($"HardwareSetup is sending CRPC to {playerNumber} on {myNaxamp.HardwareId}: {crpcPayload}");
                 });
 
             // CRPC feedback from the amp's players goes out through this amp's
-            // connection.  Subscribe after the connection exists so early feedback
-            // can't arrive before there is somewhere to send it.  This is never
-            // removed, so a lambda is fine (see CrpcHardwareConnection).
+            // connection.  This is never removed, so a lambda is fine (see
+            // CrpcHardwareConnection).
             myNaxamp.CrpcMessageReceived += (sender, e) =>
             {
                 myCrpcHardwareConnection.SendFeedback((ushort)e.Player, e.CRPCMessage);

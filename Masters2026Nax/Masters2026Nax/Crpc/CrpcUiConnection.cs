@@ -18,8 +18,34 @@ namespace Masters2026Nax.Crpc
     /// and unsubscribes broker delegates when the connected media player changes,
     /// and supports asynchronous disconnect with a short settle delay to reduce
     /// connectivity issues with the CH5 media player.</remarks>
+    /// <example>
+    /// Wire a connection to a panel's Construct Media Player by supplying two
+    /// lambdas that push strings into the Media Player's feedback inputs (this
+    /// is how the UI class does it):
+    /// <code>
+    /// myCrpcMediaPlayerConnection = new CrpcUiConnection(
+    ///     message => myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(message),
+    ///     crpc => myContract.MediaControl.MediaPlayer.MediaPlayer_CRPC_FB(crpc));
+    /// </code>
+    /// </example>
     public class CrpcUiConnection
     {
+        /// <summary>
+        /// Sends a source-change message to the panel's Media Player.
+        /// Implement this by writing the string to the Media Player's
+        /// Message_FB input in the Construct contract.
+        /// </summary>
+        /// <param name="message">Serialized source-change message (JSON).  Send it as-is.</param>
+        public delegate void SendMessageFbToUi(string message);
+
+        /// <summary>
+        /// Sends CRPC feedback from a hardware player to the panel's Media Player.
+        /// Implement this by writing the string to the Media Player's CRPC_FB
+        /// input in the Construct contract.
+        /// </summary>
+        /// <param name="crpcPayload">Serialized CRPC feedback message.  Send it as-is.</param>
+        public delegate void SendCrpcFbToUi(string crpcPayload);
+
         /// <summary>
         /// Tracks the number of times this class has been instantiated.
         /// </summary>
@@ -43,13 +69,13 @@ namespace Masters2026Nax.Crpc
         /// This is the delegate that sends the source change message to the UI's
         /// Media Player.
         /// </summary>
-        private readonly Action<string> sendMessageFbToUi;
+        private readonly SendMessageFbToUi sendMessageFbToUi;
 
         /// <summary>
         /// This is the delegate that sends Crpc Fb messages from the hardware players
         /// to the UI's Media Player.
         /// </summary>
-        private readonly Action<string> sendCrpcFbToUi;
+        private readonly SendCrpcFbToUi sendCrpcFbToUi;
 
         /// <summary>
         /// Give the Media Players time to exchange the source change messages.
@@ -63,9 +89,9 @@ namespace Masters2026Nax.Crpc
         /// it should have its own instance of this class).
         /// </summary>
         /// <remarks></remarks>
-        /// <param name="sendMessageFbToUi">Callback used to send message feedback to the UI to change sources.</param>
-        /// <param name="sendCrpcFbToUi">Callback used to send CRPC feedback to the UI from the hardware-based players.</param>
-        public CrpcUiConnection(Action<string> sendMessageFbToUi, Action<string> sendCrpcFbToUi)
+        /// <param name="sendMessageFbToUi">Callback that sends a source-change message to the panel's Media Player.  See <see cref="SendMessageFbToUi"/> and the class example.</param>
+        /// <param name="sendCrpcFbToUi">Callback that sends CRPC feedback from the hardware players to the panel's Media Player.  See <see cref="SendCrpcFbToUi"/> and the class example.</param>
+        public CrpcUiConnection(SendMessageFbToUi sendMessageFbToUi, SendCrpcFbToUi sendCrpcFbToUi)
         {
             instanceId = ++instanceCount;
 

@@ -13,8 +13,35 @@ namespace Masters2026Nax.Crpc
     /// command subscription for each hardware player and keeps those subscriptions 
     /// active for the lifetime of the process so commands from the UI are always
     /// ready to be received.</remarks>
+    /// <example>
+    /// Wire a connection to a device-specific class by supplying a lambda that
+    /// forwards each command to the device (this is how HardwareSetup does it
+    /// for the NAX amplifier):
+    /// <code>
+    /// myCrpcHardwareConnection = new CrpcHardwareConnection(
+    ///     myNaxamp.HardwareId,
+    ///     8,   // number of streaming players on the device
+    ///     (playerNumber, crpcPayload) =>
+    ///     {
+    ///         myNaxamp.SendCrpc(playerNumber, crpcPayload);
+    ///     });
+    ///
+    /// // Feedback from the device goes back out through the same connection.
+    /// myNaxamp.CrpcMessageReceived += (sender, e) =>
+    ///     myCrpcHardwareConnection.SendFeedback((ushort)e.Player, e.CRPCMessage);
+    /// </code>
+    /// </example>
     public class CrpcHardwareConnection
     {
+        /// <summary>
+        /// Delivers a CRPC command from a UI to one player on the hardware.
+        /// Implement this by forwarding to the device-specific class (for
+        /// example, NaxAmp.SendCrpc).
+        /// </summary>
+        /// <param name="playerNumber">1-based player number on this hardware (1 through the playerCount given to the constructor).</param>
+        /// <param name="crpcPayload">Serialized CRPC message, forwarded as received.  Do not modify it.</param>
+        public delegate void SendCrpcToHardware(ushort playerNumber, string crpcPayload);
+
         /// <summary>
         /// This is the unique hardware identifier for the device hosting the
         /// media players.  It is used as part of the key when establishing
@@ -39,7 +66,7 @@ namespace Masters2026Nax.Crpc
         /// This is the delegate that sends CRPC messages from the UI to the
         /// individual hardware players.
         /// </summary>
-        private readonly Action<ushort, string> sendCrpcToHardware;
+        private readonly SendCrpcToHardware sendCrpcToHardware;
 
 
         /// <summary>
@@ -57,8 +84,8 @@ namespace Masters2026Nax.Crpc
         /// </summary>
         /// <param name="hardwareId">Hardware identifier used to create the NAX amplifier instance.  Must be unique.</param>
         /// <param name="playerCount">The number of streaming players on the hardware.</param>
-        /// <param name="sendCrpcToHardware">Callback used to send CRPC commands to the hardware streamer from the UIs.</param>
-        public CrpcHardwareConnection(string hardwareId, ushort playerCount, Action<ushort, string> sendCrpcToHardware)
+        /// <param name="sendCrpcToHardware">Callback that forwards a UI's CRPC command to the given hardware player.  See <see cref="SendCrpcToHardware"/> for the argument meanings and the class example for a sample lambda.</param>
+        public CrpcHardwareConnection(string hardwareId, ushort playerCount, SendCrpcToHardware sendCrpcToHardware)
         {
             // HashSet.Add returns false if the value is already there.
             if (!usedHardwareIds.Add(hardwareId))
