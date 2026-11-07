@@ -201,6 +201,18 @@ namespace Masters2026Nax.Crpc
 
                 // There's a delay, so check again to see if the connected media
                 // player is still the same one we were connected to before unsubscribing.
+                //
+                // Known limitation: this check can't tell "still connected" from
+                // "reconnected to the same player during the delay."  If Connect()
+                // is called with the same player within the delay, Connect() skips
+                // resubscribing (same player) and we still unsubscribe here, which
+                // leaves the Media Player open with no feedback.
+                //
+                // The current UI can't trigger this.  Source buttons are only on
+                // the Main page, and the only way back to Main is the Return
+                // button, which awaits this method before the page flip.  A layout
+                // that shows source buttons alongside the Media Player could hit it
+                // with two source presses within the delay.
                 if (connectedMediaPlayer == player)
                 {
                     UnsubscribeFromLastMediaPlayer();

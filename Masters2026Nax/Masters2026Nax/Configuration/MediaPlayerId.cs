@@ -32,7 +32,12 @@ namespace Masters2026Nax.Configuration
 
         /// <summary>
         /// The player number on that hardware.  Crestron NAX players start at 1.
-        /// Other manufacturers may start at 0, so 0 is allowed.
+        ///
+        /// Always number players from 1, even if the device numbers them from 0.
+        /// CrpcHardwareConnection only listens on players 1 through playerCount,
+        /// so a PlayerNumber of 0 is accepted here but never reaches the hardware.
+        /// For a 0-based device, translate in the CrpcHardwareConnection callback
+        /// (playerNumber - 1) and translate back when calling SendFeedback.
         /// </summary>
         public ushort PlayerNumber { get; }
 

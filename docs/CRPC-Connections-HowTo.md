@@ -5,7 +5,7 @@
 | **Project:** | Masters2026Nax |
 | **Code:** | `Masters2026Nax/Crpc/CrpcHardwareConnection.cs`, `Masters2026Nax/Crpc/CrpcUiConnection.cs` |
 | **Related:** | `Configuration/MediaPlayerId.cs`, `Configuration/NaxSourceConfiguration.cs`, `Hardware/HardwareSetup.cs`, `UI/UI.cs` |
-| **Written against commit:** | `ce3635a` |
+| **Written against commit:** | `d9e7866` |
 |||
 
 ---
@@ -40,8 +40,8 @@ Three things to remember:
 - **The hardware side is always listening.** `CrpcHardwareConnection` subscribes to every
   player's command key in its constructor and never unsubscribes.
 - **The UI side subscribes only while connected to a player.** `CrpcUiConnection` subscribes to one player's
-  feedback key when you call `Connect`. It unsubscribes when you connect to a different player or
-  call `DisconnectAsync`.
+  feedback key when you call `Connect`. It unsubscribes when you connect to a different player,
+  call `Connect(null)`, or call `DisconnectAsync`.
 - **Every panel connected to the same player receives the same feedback.** This is intentional
   and matches how SIMPL implementations behave.
 
@@ -94,9 +94,9 @@ ushort naxPlayerCount = 8;
 myCrpcHardwareConnection = new CrpcHardwareConnection(
     myNaxamp.HardwareId,          // 1. Unique name for this hardware, e.g. "Nax1"
     naxPlayerCount,               // 2. How many players it has
-    (player, msg) =>              // 3. How to send a CRPC command to the real hardware
+    (playerNumber, crpcPayload) =>  // 3. How to send a CRPC command to the real hardware
     {
-        myNaxamp.SendCrpc(player, msg);
+        myNaxamp.SendCrpc(playerNumber, crpcPayload);
     });
 ```
 
@@ -170,10 +170,13 @@ If no panel is connected to the player, the message is simply dropped. That's no
   same `hardwareId` (including `"nax1"` vs `"Nax1"`) throws `ArgumentException` at startup.
 - **The `hardwareId` must exactly match the `HardwareId` in your `MediaPlayerId` configuration.**
   If they don't match, the UI's commands go to a key nobody is listening on (see Troubleshooting).
-- **Players are registered starting at 1.** If you add a device whose players are numbered from 0,
-  translate in your callback (for example, `(player, msg) => device.Send(player - 1, msg)`), and
-  translate back when you call `SendFeedback`.
-- **Never unsubscribe to CommandKeys.** The hardware should always be ready for commands from the UI.
+- **Players are registered starting at 1.** `CrpcHardwareConnection` only listens on players `1`
+  through `playerCount`, so a `MediaPlayerId` with `PlayerNumber` `0` never reaches the hardware.
+  If you add a device whose players are numbered from 0, still number its `MediaPlayerId`s from 1,
+  translate in your callback (for example,
+  `(playerNumber, crpcPayload) => device.Send(playerNumber - 1, crpcPayload)`), and translate back
+  when you call `SendFeedback`.
+- **Never unsubscribe from CommandKeys.** The hardware should always be ready for commands from the UI.
 
 ### 4.4 Example: adding a second NAX
 
@@ -184,7 +187,7 @@ myNaxamp2 = new NaxAmp(0x12, "Nax2", cs);
 myCrpcHardwareConnection2 = new CrpcHardwareConnection(
     myNaxamp2.HardwareId,
     8,
-    (player, msg) => myNaxamp2.SendCrpc(player, msg));
+    (playerNumber, crpcPayload) => myNaxamp2.SendCrpc(playerNumber, crpcPayload));
 
 myNaxamp2.CrpcMessageReceived += (sender, e) =>
     myCrpcHardwareConnection2.SendFeedback((ushort)e.Player, e.CRPCMessage);
@@ -341,6 +344,13 @@ Passing `null` sends `src 0` and leaves the panel unsubscribed.
 4. If the panel is still connected to the same player, it unsubscribes.
 5. It **never throws.** Any exception is caught and logged.
 
+> **Known limitation:** step 4 can't tell "still connected" from "reconnected to the same player
+> during the 200 ms." If `Connect` is called with the same player during the delay, it skips
+> resubscribing, and `DisconnectAsync` still unsubscribes. The Media Player stays open with no
+> feedback. This project's UI can't trigger it, because source buttons are only on the Main page and
+> Return awaits `DisconnectAsync` before flipping to Main. A layout that shows source buttons next
+> to the Media Player could hit it if the user presses two sources within 200 ms.
+
 ### 5.6 Why you can't just flip the page
 
 If the Media Player page closes before the panel processes the "src 0" message, the panel's player
@@ -348,13 +358,18 @@ can end up in the wrong state. Then it may not connect properly the next time, e
 different player. That's why the Return button **awaits** `DisconnectAsync` before the page flip,
 instead of using a hard-coded page flip in Construct.
 
-A future update to the CH5 Media Player may eliminate the need for this this workaround.
+A future update to the CH5 Media Player may eliminate the need for this workaround.
 
 ### 5.7 Adding another panel
 
-In `ControlSystem.InitializeSystem()`:
+In `ControlSystem`, declare a field next to the existing panels, then create the panel in
+`InitializeSystem()`:
 
 ```csharp
+// With the other fields
+UI? myThirdXpanel;
+
+// In InitializeSystem(), with the other panels
 myThirdXpanel = new UI(0x05, this);
 ```
 
@@ -416,7 +431,7 @@ These are worth understanding before you change the code.
 |---|---|---|
 | **Named delegate callbacks** (`SendCrpcToHardware`, `SendMessageFbToUi`, `SendCrpcFbToUi`) | Both constructors | The CRPC classes don't need to know about `NaxAmp` or the Construct contract. You pass in *how* to send. |
 | **Lambda vs. named method** | `CrpcHardwareConnection` uses a lambda; `CrpcUiConnection` uses `ForwardCrpcFbToUi` | You can only remove a delegate from the broker if you pass the **same** method again. Lambdas are fine for subscriptions that are never removed. |
-| **Lambda capture in a `for` loop** | `CrpcHardwareConnection` constructor | A lambda captures the *variable*, not its value. The loop copies the player number into a local (`mediaPlayer`) so each lambda gets its own copy. |
+| **Lambda capture in a `for` loop** | `CrpcHardwareConnection` constructor | A lambda captures the *variable*, not its value. Each pass creates a local `MediaPlayerId` (`mediaPlayer`), and the lambda reads `mediaPlayer.PlayerNumber` instead of the loop variable, so each lambda gets its own copy. |
 | **`record` equality** | `MediaPlayerId` | `==` compares contents, so "is this the same player?" is one line. |
 | **`static` fields** | `instanceCount`, `usedHardwareIds` | Shared by all instances. Used for unique UI instance IDs and duplicate hardware-ID detection. |
 | **Nullable references (`MediaPlayerId?`)** | `CrpcUiConnection` | `null` has a real meaning: "not connected." |

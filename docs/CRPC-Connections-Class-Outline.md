@@ -14,6 +14,7 @@
 
 - [ ] Processor loaded with the current build, NAX online, two panels (0x03, 0x04) open side by side.
 - [ ] Log page (CwsDebug) open on the projector, filtered to Notice and above.
+- [ ] Disable Copilot code completions in Visual Studio.
 - [ ] Visual Studio open with five tabs: `ControlSystem.cs` (`SetupNaxSources`), `MediaPlayerId.cs`, `HardwareSetup.cs` (CRPC section), `UI.cs` (Media Player section), `CrpcHardwareConnection.cs` (`for` loop comment).
 - [ ] SIMPL Windows program open (Media Player extender & NAX Player) and the DM-NAX-8ZSA Player Transport Control help page loaded.
 - [ ] LINQPad open with the `Record Equality Demo` and `Lambda Removal Demo`.
