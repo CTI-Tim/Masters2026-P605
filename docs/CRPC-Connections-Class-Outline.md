@@ -47,9 +47,11 @@ tell which side is misconfigured.
 **Key points**
 - The CH5 Media Player on the panel and the players in the NAX don't talk to each other directly. Our program passes messages between them.
 - The messages are **CRPC** strings, which are simply JSON formatted data that go back and forth. We don't need to read or understand them. We just deliver them to the right place.
-- Three jobs: tell the panel's media player **the source changed**, commands **in**, feedback **out**.
+- Three jobs: commands **in**, feedback **out**, tell the panel's media player **the source changed**.
 
 **Say:** "Your job isn't to understand CRPC. Your job is to be a good telephone switchboard operator."
+
+
 
 **Transition:** "Rather than mix this switchboard code into the `NaxAmp`, `HardwareSetup`, and `UI` classes, we use two new classes to tie it all together."
 
