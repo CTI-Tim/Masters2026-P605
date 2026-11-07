@@ -1,10 +1,12 @@
-# Class Outline: Connecting CH5 Media Players to NAX with CRPC
+# Section Outline: Connecting CH5 Media Players to NAX with CRPC
 
-**Length:** 30 minutes (core content fills the slot; no buffer. "Time permitting" items add about 3 min, so skip them if you're behind.)
-**Audience:** C# programmers with minimal experience (Crestron background expected)
-**Companion handout:** `CRPC-Connections-HowTo.md`
-**Goal:** Attendees leave able to (1) add a panel, (2) add a hardware player, and (3) use the log to
-tell which side is misconfigured.
+|||
+|----:|----|
+| **Length:** | 30 minutes (core content fills the slot; no buffer. "Time permitting" items add about 3 min, so skip them if you're behind.) |
+| **Audience:** | C# programmers with minimal/intermediate experience (Crestron background expected) |
+| **Companion handout:** | `CRPC-Connections-HowTo.md` (also HTML and PDF) |
+| **Goal:** | Attendees leave able to (1) add a panel, (2) add a hardware player, and (3) use the log to tell which side is misconfigured. |
+|||
 
 ---
 
@@ -41,8 +43,8 @@ tell which side is misconfigured.
 
 Now that you've seen how to select NAX audio sources and tie button event handlers into the generated contracts, let's look at adding the Media Players.
 
-**Key points**
-- I will sometimes use "streaming player" as shorthand for a single media player on NAX hardware.
+**Note:**
+I will sometimes use "streaming player" as shorthand for a single media player on NAX or other hardware that supports media playback.
 
 **DEMO 1:** First, let's see one in action.  (live or video)
   - Show an XPanel with the CH5 Media Player active.  
@@ -92,7 +94,7 @@ Now that you've seen how to select NAX audio sources and tie button event handle
 
 ---
 
-[segue] Now let's look at the class implementation.  You've already been introduced to the Broker, so let's look at how we keep the Broker keys straight.
+_Now let's look at the class implementation.  You've already been introduced to the Broker, so let's look at how we keep the Broker keys straight._
 
 ## 3. `MediaPlayerId`: the address (0:08–0:10)
 
@@ -100,7 +102,8 @@ Now that you've seen how to select NAX audio sources and tie button event handle
 
 **Key points**
 - We identify each streaming player with two pieces of information: the hardware ID and the specific player number.
-- We could have used a string when setting up the sources, but we would still need to create a second set of keys.  The `Command` and `Feedback` keys are used for independent subscriptions.
+- We could have used a single string, but each player needs **two** broker keys, `CommandKey` and `FeedbackKey`, for two independent subscriptions: the hardware always listens on one, and the UI listens on the other only while connected. Building both by hand everywhere brings back magic strings. 
+- Keeping the hardware ID and player number separate also lets the hardware side build the matching ID from just a player number.
 - This builds **both broker keys** for you.   
 
 **ON SCREEN:** The `MediaPlayerId` class.
@@ -117,7 +120,7 @@ Now that you've seen how to select NAX audio sources and tie button event handle
 
 ---
 
-[segue] Now, let's look at how we use the Crpc-related classes.
+_Now, let's look at how we use the Crpc-related classes._
 
 ## 4. Communication flow (0:10–0:12)
 
@@ -234,7 +237,7 @@ Pick these three. The rest are in the handout (How-To §9).
 
 **Three takeaways (say them, then leave them on screen):**
 
-![CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Players to CrpcHardwareConnection to Broker](diagrams/crpc-architecture-multi.svg)
+![Multiple CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Players to CrpcHardwareConnection to Broker](diagrams/crpc-architecture-multi.svg)
 
 1. **One `CrpcHardwareConnection` per device, one `CrpcUiConnection` per panel.** They meet only at the broker.
 2. **`MediaPlayerId` is the address.** The hardware ID must match on both sides, and you never type broker keys by hand.

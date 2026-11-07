@@ -1,9 +1,12 @@
 # How To Use `CrpcHardwareConnection` and `CrpcUiConnection`
 
-**Project:** Masters2026Nax
-**Code:** `Masters2026Nax/Crpc/CrpcHardwareConnection.cs`, `Masters2026Nax/Crpc/CrpcUiConnection.cs`
-**Related:** `Configuration/MediaPlayerId.cs`, `Configuration/NaxSourceConfiguration.cs`, `Hardware/HardwareSetup.cs`, `UI/UI.cs`
-**Written against commit:** `ce3635a`
+|||
+|----:|----|
+| **Project:** | Masters2026Nax |
+| **Code:** | `Masters2026Nax/Crpc/CrpcHardwareConnection.cs`, `Masters2026Nax/Crpc/CrpcUiConnection.cs` |
+| **Related:** | `Configuration/MediaPlayerId.cs`, `Configuration/NaxSourceConfiguration.cs`, `Hardware/HardwareSetup.cs`, `UI/UI.cs` |
+| **Written against commit:** | `ce3635a` |
+|||
 
 ---
 
@@ -30,51 +33,7 @@ keys, and those keys come from `MediaPlayerId`.
 
 ## 2. Communication flow
 
-```mermaid
-flowchart TD
-    subgraph PANEL["TOUCH PANEL"]
-        direction LR
-        TP_SOURCE_SELECT["User selects media player source"]
-        subgraph MP["CH5 Media Player"]
-            MP_MSG_FB["MediaPlayer_Message_FB<br/>(source-change JSON)"]
-            MP_CRPC["MediaPlayer_CRPC<br/>(user interactions, requests, responses)"]
-            MP_CRPC_FB["MediaPlayer_CRPC_FB<br/>(menu info, track title, art...)"]
-        end
-    end
-
-    subgraph PROGRAM["PROGRAM"]
-        direction TD
-        subgraph UiClass["CrpcUiConnection()"]
-            UiConn["CrpcUiConnection.Connect() / DisconnectAsync() - subscribe and unsubscribe to <b>FeedbackKey</b>"]
-            UiSend["CrpcUiConnection.SendCommand()"]
-            UiFwd["CrpcUiConnection<br/>(private ForwardCrpcFbToUi)"]
-        end
-        subgraph HwClass["CrpcHardwareConnection()"]
-            HwConn["CrpcHardwareConnection<br/>(subscribed to all <b>CommandKey</b>s at startup, forever)"]
-            HwFb["CrpcHardwareConnection.SendFeedback()"]
-        end
-    end
-
-    subgraph NAX["NAX Streaming Hardware"]
-        direction TD
-        NaxSend["NaxAmp.SendCrpc()"]
-        NaxRecv["NaxAmp.CrpcMessageReceived"]
-    end
-
-    %% Command path: panel -> NAX
-    MP_CRPC --> UiSend
-    UiSend -->|"Broker (<b>CommandKey</b>): MediaPlayer[Nax1.Player1]Crpc"| HwConn
-    HwConn --> NaxSend
-
-    %% Feedback path: NAX -> panel
-    NaxRecv --> HwFb
-    HwFb -->|"Broker (<b>FeedbackKey</b>): MediaPlayer[Nax1.Player1]CrpcFb<br/>(subscribed ONLY while connected)"| UiFwd
-    UiFwd --> MP_CRPC_FB
-
-    %% Source-change message
-    TP_SOURCE_SELECT --> UiConn
-    UiConn --> MP_MSG_FB
-```
+![Multiple CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Players to CrpcHardwareConnection to Broker](diagrams/crpc-architecture-multi.svg)
 
 Three things to remember:
 
