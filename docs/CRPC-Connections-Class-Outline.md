@@ -13,9 +13,8 @@ tell which side is misconfigured.
 - [ ] Processor loaded with the current build, NAX online, two panels (0x03, 0x04) open side by side.
 - [ ] Log page (CwsDebug) open on the projector, filtered to Notice and above.
 - [ ] Visual Studio open with three tabs: `MediaPlayerId.cs`, `HardwareSetup.cs` (CRPC section), `UI.cs` (Media Player section).
-- [ ] The big-picture diagram (How-To §2) drawn on the whiteboard or on one slide.
 - [ ] Handout printed or shared.
-- [ ] Backup: screenshots of the log for each demo step, in case the hardware misbehaves.
+- [ ] Backup: video of using the CH5 Media Player and screenshots of the log for each demo step, in case the hardware misbehaves.
 
 ---
 
@@ -36,64 +35,109 @@ tell which side is misconfigured.
 
 ## 0. Introduction
 
-**Bullets**
-- [segue] Now that you've seen how to select NAX audio sources and tie button event handlers into the generated contracts, we need to enable control of the NAX streaming media players.
-- We are going to walk through two new classes you can use with one or more touchpanels and one or more streaming media players.
+Now that you've seen how to select NAX audio sources and tie button event handlers into the generated contracts, let's look at adding the Media Players.
+
+**Key points**
+- I will sometimes use "streaming player" as shorthand for a single media player on NAX hardware.
+
+**DEMO 1:** First, let's see one in action.  (live or video)
+  - Show an XPanel with the CH5 Media Player active.  
+  - Navigate through the available sources; play/pause the stream.
+
+**DEMO 2:**
+  * Show SIMPL Windows - Media Player extender & NAX Player - focus on `CRPC`, `CRPC_FB`, & `Message_Fb`.
+  * Show DM-NAX-8ZSA Player Transport Control help: https://help.crestron.com/simpl/#ACards_DM/DM-NAX/DM-NAX-8ZSA/Player%20Transport%20Control.htm
 
 ---
 
-## 1. The problem (0:00–0:03)
+## 1. What are we doing?
 
 **Key points**
 - The CH5 Media Player on the panel and the players in the NAX don't talk to each other directly. Our program passes messages between them.
 - The messages are **CRPC** strings, which are simply JSON formatted data that go back and forth. We don't need to read or understand them. We just deliver them to the right place.
 - Three jobs: commands **in**, feedback **out**, tell the panel's media player **the source changed**.
 
-**Say:** "Your job isn't to understand CRPC. Your job is to be a good telephone switchboard operator."
+**Say:** "Fortunately, you don't have to understand CRPC.  Your job is to be a good telephone switchboard operator-- ask who are you trying to reach, then plug the cable in.  When the call completes, you unplug the cable."
 
-
-
-**Transition:** "Rather than mix this switchboard code into the `NaxAmp`, `HardwareSetup`, and `UI` classes, we use two new classes to tie it all together."
-
-**Check for understanding:** "What previously covered class comes to mind when I mention `telephone switchboard`?"  (*The `Broker` class.*)
+**Check for engagement:**
+- "If you only needed to route the `CRPC` & `CRPC_FB` signals in SIMPL, how would you do that?"
+- "Thinking about what we've done so far, what can we use to route these signals between the `Nax8zsa` and `XpanelForHtml5` without directly connecting them?"  (*Using the `Broker` class.*)
+- "Does the Broker need to know what type of touchpanel or NAX hardware we are using?"  (*It does not.  This also means the two pieces of hardware don't need to know anything about each other.*)
 
 ---
 
-## 2. Communication flow (0:03–0:08)
+## 2. Challenges
 
-**Draw the diagram** (How-To §2). Build it from left to right while talking:
-1. Panel on the left, NAX on the right.
-2. `CrpcUiConnection` next to the panel ("one per panel").
-3. `CrpcHardwareConnection` next to the streaming media player hardware ("one per DM-NAX-8ZSA").
-4. Message Broker in the middle with two arrows: **command key →** and **← feedback key**.
+**Challenge 1**
+- When using the Broker, we need to use a consistent set of keys, preferrably without using "magic strings".  The Broker only listens for keys that have an **exact match**.  We'll use a class to help us keep things consistent.
+
+**Ask:**  
+  - "Have we removed any delegates from the Broker so far?"  (*No.*)
+  - "After adding a delegate to the Broker, how long is it active?"  (*As long as the program is running.*)
+  - "When do the players on the hardware need to listen for commands from the UI?"  (*Always.*)
+  - "When do the CH5 Media Players need feedback from the streaming players?"  (*Only when needed, and only from one player at a time.*)
+
+**Challenge 2**
+- This means we need to dynamically add and remove delegates on the UI side.  This can be a challenge when using lambdas.  **Remember that, as we'll come back to it.**  Our classes handle the UI and Hardware Broker subscriptions.
+
+**Challenge 3**
+- We need to let the CH5 Media Player know when the source has changed.  Without it, it will never know to start communicating with the streaming player.  The message that does that isn't documented, so we put it into our class.
+
+**Challenge 4**
+- We need to implement some classes in a way that supports multiple touchpanels and multiple pieces of streaming hardware, and we can mix and match them.
+
+---
+
+[segue] Now let's look at the class implementation.  You've already been introduced to the Broker, so let's look at how we keep the Broker keys straight.
+
+## 3. `MediaPlayerId`: the address
+
+**ON SCREEN:** `ControlSystem.SetupNaxSources()`
 
 **Key points**
-- The two classes **never know about each other.** They only meet at the broker.
+- We identify each streaming player with two pieces of information: the hardware ID and the specific player number.
+- We could have used a string, but that would only work for 1/2 the subscriptions.
+- This builds **both broker keys** for you.   
+
+**ON SCREEN:** The `MediaPlayerId` class.
+
+**Key points**
+- Show `CommandKey` and `FeedbackKey`.  Never type those strings by hand.
+- It's a `record`, so two IDs with the same values are equal.  (We'll use this in a minute.)
+- A blank hardware ID crashes at startup **on purpose**.  Fail loudly early rather than quietly later.
+
+**Time Permitting**: Show the `Record Equality Demo` in LINQPad.  If time is short, suggest they read through the class comments, particularly if they have never used a record before.
+
+**Should it come up**
+- We made this a `sealed` record because it should not be inherited or overriden.
+
+---
+
+[segue] Now, let's look at how we use the Crpc-related classes.
+
+## 4. Communication flow
+
+![CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Players to CrpcHardwareConnection to Broker](diagrams/crpc-architecture-single.svg)
+
+**Key points**
+- We use one instance of the classes per device / per IP ID.
+- We use one `CrpcHardwareConnection` **per** streaming server, like the NAX-8ZSA.
 - **Hardware side:** subscribes at startup and never lets go. It's always listening.
+- We use one `CrpcUiConnection` **per** panel.
 - **UI side:** subscribes only while the user is looking at a player. It switches when the user switches players. It disconnects when the user closes the media player.
 - Two panels on the same player both get the feedback. That's intended and matches SIMPL.
 
 **Check for understanding:** "If I add a panel, which side of the diagram gets a new box?" (*The UI side. One new `CrpcUiConnection`.*)
 
----
-
-## 3. `MediaPlayerId`: the address (0:08–0:11)
-
-**Show:** `Configuration/MediaPlayerId.cs`
+## 5. Hardware side: `CrpcHardwareConnection`
 
 **Key points**
-- `new MediaPlayerId("Nax1", 1)` means "Player 1 on Nax1."
-- It **builds the broker keys** for you. Show `CommandKey` and `FeedbackKey`. Never type those strings by hand.
-- It's a `record`, so two IDs with the same values are equal. (We'll use this in a minute.)
-- A blank hardware ID crashes at startup **on purpose**. Fail loudly early rather than quietly later.
+- This class ensures each player on the hardware subscribes to CRPC commands from the UI and provides a way to get feedback to the UI. 
+- Uses unique `CommandKey`s and allows us to assign a callback to pass the CRPC message to the specific player.  This is **always listening** for messages.
+- The `CommandKey` includes both the `hardwareId` & `playerNumber`.
+- Provides a method, `SendFeedback`, that our hardware wrapper uses to publish CRPC feedback from the players so any connected CH5 Media Player gets it.  This always sends, even if no UIs are listening.
 
-**Show:** `ControlSystem.SetupNaxSources()`, where each media-player source gets its `MediaPlayerId`.
-
----
-
-## 4. Hardware side: `CrpcHardwareConnection` (0:11–0:15)
-
-**Show:** `HardwareSetup.cs`, the Media Player CRPC block.
+**ON SCREEN:** `HardwareSetup.cs`, the Media Player CRPC block.
 
 **Walk through the two steps:**
 1. **Create it:** hardware ID, player count, and a lambda that says *how* to send to the NAX.
@@ -104,21 +148,23 @@ tell which side is misconfigured.
 - One per device. A duplicate ID (even `nax1` vs `Nax1`) throws at startup.
 - The hardware ID **must match** the ID in your `MediaPlayerId`s. This is the #1 setup mistake.
 
+**Check for understanding:** 
+- "If you only have a four zone NAX, what would you need to change in `CrpcHarwareConnection`?"  (*Nothing.*)
+
 **Show briefly:** How-To §4.4, "Adding a second NAX." It's about six lines, and `UI.cs` doesn't change.
 
 ---
 
-## 5. UI side: `CrpcUiConnection` (0:15–0:22)
+## 6. UI side: `CrpcUiConnection` 
+
+**Key points**
+- This class dynamically subscribes and unsubscribes to the selected streaming player, so it only listens to CRPC feedback when needed.
+- Uses the `FeedbackKey` to assign a callback for a particular player to send CRPC FB to the CH5 Media Player.
+- Provides a method, `SendCommand`, to send CRPC messages to the selected streaming player.
+- The class lets the CH5 Media Player know when the source has changed.  This tells it to restart communication with a new player.
+- Forces a delay when closing the CH5 Media Player to ensure it receives and processes the "source 0" message.  This is a work-around for the media player not always syncing up with new sources after the program restarts.
 
 **Show:** `UI.cs`, the constructor where `CrpcUiConnection` is created with two lambdas (Message_FB and CRPC_FB).
-
-**Put the three methods on the board:**
-
-| Method | When |
-|---|---|
-| `Connect(player)` | User picks a media-player source |
-| `SendCommand(crpc)` | Panel's Media Player sends CRPC |
-| `DisconnectAsync()` | User leaves, picks a non-player source, or the panel goes offline |
 
 **Walk through the five call sites** (How-To §5.3). Keep each to about 30 seconds:
 1. CRPC event → `SendCommand`
@@ -130,35 +176,45 @@ tell which side is misconfigured.
 **Live demo (about 3 min)**
 1. Panel A: select Media Player 1. In the log, point out the source-change message (`tag` 01) and "connected to …CrpcFb".
 2. Panel B: select Media Player 1. Point out `tag` 02. Press Play on B, and **both panels update.**
-3. Panel A: press Return. In the log, point out the source-change message with `src 0` and "unsubscribing."
+3. Panel B: press Return.  Select Media Player 2. Point out `tag` 02. Navigate the UI and show independent operation.
+4. Clear the log.
+5. Panel A: press Return.  In the log, point out the source-change message with `src 0` and "unsubscribing."
 
 **Key point, the one rule to remember:** *Don't flip away from the Media Player page directly. Await `DisconnectAsync` first.* The panel needs about 200 ms with the page still open to process the "source 0" message. Otherwise the next connection can fail.
 
-**Check for understanding:** "What should a new panel class need to change in `CrpcUiConnection`?" (*Nothing. Create one and wire up the five call sites.*)
+**Check for understanding:** 
+- "What does a new panel class need to change in `CrpcUiConnection`?" (*Nothing. Create one and wire up the five call sites.*)
+- How many instances of `CrpcUiConnection` would we have with two touchpanels and two Xpanels?  (*Four.  PSA: Don't re-use IP IDs.*)
 
 ---
 
-## 6. Three C# ideas that make it work (0:22–0:26)
+## 7. Three C# ideas that make it work (0:22–0:26)
 
 Pick these three. The rest are in the handout (How-To §9).
 
 **a. Callbacks (named delegates), about 1.5 min**
-- "Here's a method; call it when you need to send." That's all a delegate is. We give each callback a name (`SendCrpcToHardware`, `SendMessageFbToUi`, `SendCrpcFbToUi`) so IntelliSense shows what the arguments mean.
+- "Here's a method; call it when you need to send."  That's all a delegate is.  We give each callback a name (`SendCrpcToHardware`, `SendMessageFbToUi`, `SendCrpcFbToUi`) so IntelliSense shows what the arguments mean.
 - That's why neither class mentions `NaxAmp` or the Construct contract.
 
+
 **b. Lambda vs. named method, about 1.5 min**
+
+**Ask:** "Can I get a show of hands for anyone that uses lambda expressions regularly?"
+
+**Show** the `Lambda Removal Demo` in LINQPad.
+
 - Hardware side uses a lambda because it never unsubscribes.
-- UI side uses the named method `ForwardCrpcFbToUi` because to **remove** a subscription, you must hand the broker the **same** method you added. You can't hand it the same lambda twice.
-- *Optional, if the room is with you:* show the `for`-loop capture comment in `CrpcHardwareConnection`. It's a classic bug and worth knowing exists.
+- UI side uses the named method `ForwardCrpcFbToUi` because to **remove** a subscription, you must hand the broker the **same** method you added.  You can't hand it the same lambda twice.
+- *Optional, if the room is with you:* show the `for`-loop capture comment in `CrpcHardwareConnection`.  It's a classic bug and worth knowing exists.
 
 **c. `async` / `await`, about 1 min**
 - `await Task.Delay(200)` waits without freezing the panel. `Thread.Sleep` freezes it.
 - `async void` is **only** for event handlers. Everywhere else, use `async Task`.
-- `_ = DisconnectAsync();` means "start it, don't wait." Use it when nothing has to happen afterward.
+- `_ = DisconnectAsync();` means "start it, don't wait."  Use it when nothing has to happen afterward.
 
 ---
 
-## 7. Troubleshooting with the log (0:26–0:28)
+## 8. Troubleshooting with the log (0:26–0:28)
 
 **Live demo (pre-staged, or show screenshots):** change one source's `MediaPlayerId` to `"Nax2"` (no such hardware), select it, and press Play.
 
@@ -168,9 +224,12 @@ Pick these three. The rest are in the handout (How-To §9).
 
 ---
 
-## 8. Recap and questions (0:28–0:30)
+## 9. Recap and questions (0:28–0:30)
 
 **Three takeaways (say them, then leave them on screen):**
+
+![CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Players to CrpcHardwareConnection to Broker](diagrams/crpc-architecture-multi.svg)
+
 1. **One `CrpcHardwareConnection` per device, one `CrpcUiConnection` per panel.** They meet only at the broker.
 2. **`MediaPlayerId` is the address.** The hardware ID must match on both sides, and you never type broker keys by hand.
 3. **`await DisconnectAsync()` before leaving the Media Player page.**
