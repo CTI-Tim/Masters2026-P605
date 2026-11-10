@@ -3,7 +3,7 @@ ObjTp=FSgntr
 Sgntr=CHD
 RelVrs=1
 Schema=1
-CrestronConstruct=1.4901.18.0
+CrestronConstruct=1.5001.45.0
 ]
 [
 ObjTp=Hd
@@ -11,7 +11,7 @@ Schema=1
 ProjectFile=Masters2026NaxPanel.cuip
 ContractID=ZDE4NDEyZDctNzY5MC00MDg2LTkxNTktY2JlZGE0MjAyZTJh
 CEProjectVer=1.0.0.0
-DateTimeUTC=2026-10-26 14:04:48.947
+DateTimeUTC=2026-11-09 13:56:33.373
 ]
 [
 ObjTp=Symbol
