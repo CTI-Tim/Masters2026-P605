@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CRPC-Connections-HowTo.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em
+}
+code.hljs {
+  padding: 3px 5px
+}
+/*!
+  Theme: StackOverflow Dark
+  Description: Dark theme as used on stackoverflow.com
+  Author: stackoverflow.com
+  Maintainer: @Hirse
+  Website: https://github.com/StackExchange/Stacks
+  License: MIT
+  Updated: 2021-05-15
+
+  Updated for @stackoverflow/stacks v0.64.0
+  Code Blocks: /blob/v0.64.0/lib/css/components/_stacks-code-blocks.less
+  Colors: /blob/v0.64.0/lib/css/exports/_stacks-constants-colors.less
+*/
+.hljs {
+  /* var(--highlight-color) */
+  color: #ffffff;
+  /* var(--highlight-bg) */
+  background: #1c1b1b
+}
+.hljs-subst {
+  /* var(--highlight-color) */
+  color: #ffffff
+}
+.hljs-comment {
+  /* var(--highlight-comment) */
+  color: #999999
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-meta .hljs-keyword,
+.hljs-doctag,
+.hljs-section {
+  /* var(--highlight-keyword) */
+  color: #88aece
+}
+.hljs-attr {
+  /* var(--highlight-attribute); */
+  color: #88aece
+}
+.hljs-attribute {
+  /* var(--highlight-symbol) */
+  color: #c59bc1
+}
+.hljs-name,
+.hljs-type,
+.hljs-number,
+.hljs-selector-id,
+.hljs-quote,
+.hljs-template-tag {
+  /* var(--highlight-namespace) */
+  color: #f08d49
+}
+.hljs-selector-class {
+  /* var(--highlight-keyword) */
+  color: #88aece
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-symbol,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-link,
+.hljs-selector-attr {
+  /* var(--highlight-variable) */
+  color: #b5bd68
+}
+.hljs-meta,
+.hljs-selector-pseudo {
+  /* var(--highlight-keyword) */
+  color: #88aece
+}
+.hljs-built_in,
+.hljs-title,
+.hljs-literal {
+  /* var(--highlight-literal) */
+  color: #f08d49
+}
+.hljs-bullet,
+.hljs-code {
+  /* var(--highlight-punctuation) */
+  color: #cccccc
+}
+.hljs-meta .hljs-string {
+  /* var(--highlight-variable) */
+  color: #b5bd68
+}
+.hljs-deletion {
+  /* var(--highlight-deletion) */
+  color: #de7176
+}
+.hljs-addition {
+  /* var(--highlight-addition) */
+  color: #76c490
+}
+.hljs-emphasis {
+  font-style: italic
+}
+.hljs-strong {
+  font-weight: bold
+}
+.hljs-formula,
+.hljs-operator,
+.hljs-params,
+.hljs-property,
+.hljs-punctuation,
+.hljs-tag {
+  /* purposely ignored */
+  
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+<link rel="stylesheet" href="file://C:/Users/CWelsh/OneDrive - AVI-SPL/Documents/VSCode/markdown-pdf.css" type="text/css">
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="how-to-use-crpchardwareconnection-and-crpcuiconnection">How To Use <code>CrpcHardwareConnection</code> and <code>CrpcUiConnection</code></h1>
+<table>
+<thead>
+<tr>
+<th style="text-align:right"></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right"><strong>Project:</strong></td>
+<td>Masters2026Nax</td>
+</tr>
+<tr>
+<td style="text-align:right"><strong>Code:</strong></td>
+<td><code>Masters2026Nax/Crpc/CrpcHardwareConnection.cs</code>, <code>Masters2026Nax/Crpc/CrpcUiConnection.cs</code></td>
+</tr>
+<tr>
+<td style="text-align:right"><strong>Related:</strong></td>
+<td><code>Configuration/MediaPlayerId.cs</code>, <code>Configuration/NaxSourceConfiguration.cs</code>, <code>Hardware/HardwareSetup.cs</code>, <code>UI/UI.cs</code></td>
+</tr>
+<tr>
+<td style="text-align:right"><strong>Written against commit:</strong></td>
+<td><code>d9e7866</code></td>
+</tr>
+<tr>
+<td style="text-align:right"></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="1-what-these-classes-are-for">1. What these classes are for</h2>
+<p>The CH5 <strong>Media Player</strong> object on a touch panel does not talk to the NAX streaming media players directly.
+Your program sits in the middle and has to do three things:</p>
+<ol>
+<li>Tell the panel's Media Player <strong>the source has changed and to start talking to the new source</strong> (the &quot;source-change message&quot;).</li>
+<li>Pass <strong>CRPC commands</strong> from the panel's Media Player to the right hardware player.</li>
+<li>Pass <strong>CRPC feedback</strong> from that hardware player back to every panel that's watching it.</li>
+</ol>
+<p>Two classes split this work. Each one handles one end of the conversation:</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Where you create it</th>
+<th>How many</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CrpcHardwareConnection</code></td>
+<td><code>HardwareSetup</code></td>
+<td><strong>One per media server</strong> (one per device with one or more streaming media players, e.g. <em>DM-NAX-8ZSA</em>)</td>
+<td>Listens for commands for each of the hardware's players and publishes their feedback</td>
+</tr>
+<tr>
+<td><code>CrpcUiConnection</code></td>
+<td><code>UI</code></td>
+<td><strong>One per panel</strong> that has a CH5 Media Player object</td>
+<td>Connects the panel to one player at a time, forwards commands, receives feedback, sends source-change messages</td>
+</tr>
+</tbody>
+</table>
+<p>The two classes <strong>never reference each other.</strong> They only share the Message Broker
+keys, and those keys come from <code>MediaPlayerId</code>.</p>
+<hr>
+<h2 id="2-communication-flow">2. Communication flow</h2>
+<h3 id="one-panel-one-hardware-player">One Panel, One Hardware Player</h3>
+<p><img src="diagrams/crpc-architecture-single.svg" alt="Single CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Player to CrpcHardwareConnection to Broker"></p>
+<h3 id="multiple-panels-multiple-hardware-players">Multiple Panels, Multiple Hardware Players</h3>
+<p><img src="diagrams/crpc-architecture-multi.svg" alt="Multiple CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Players to CrpcHardwareConnection to Broker"></p>
+<p>Three things to remember:</p>
+<ul>
+<li><strong>The hardware side is always listening.</strong> <code>CrpcHardwareConnection</code> subscribes to every
+player's command key in its constructor and never unsubscribes.</li>
+<li><strong>The UI side subscribes only while connected to a player.</strong> <code>CrpcUiConnection</code> subscribes to one player's
+feedback key when you call <code>Connect</code>. It unsubscribes when you connect to a different player,
+call <code>Connect(null)</code>, or call <code>DisconnectAsync</code>.</li>
+<li><strong>Every panel connected to the same player receives the same feedback.</strong> This is intentional
+and matches how SIMPL implementations behave.</li>
+</ul>
+<hr>
+<h2 id="3-mediaplayerid-the-address-of-a-player">3. <code>MediaPlayerId</code>: the address of a player</h2>
+<p>Every hardware media player is identified by a <code>MediaPlayerId</code>. It has two parts:</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">var</span> player = <span class="hljs-keyword">new</span> MediaPlayerId(<span class="hljs-string">&quot;Nax1&quot;</span>, <span class="hljs-number">1</span>);   <span class="hljs-comment">// Player 1 on the hardware called &quot;Nax1&quot;</span>
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Example value</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HardwareId</code></td>
+<td><code>&quot;Nax1&quot;</code></td>
+<td>Must match the hardware ID given to <code>CrpcHardwareConnection</code></td>
+</tr>
+<tr>
+<td><code>PlayerNumber</code></td>
+<td><code>1</code></td>
+<td>Which player on that hardware</td>
+</tr>
+<tr>
+<td><code>CommandKey</code></td>
+<td><code>&quot;MediaPlayer[Nax1.Player1]Crpc&quot;</code></td>
+<td>UI <strong>sends</strong> to this key; hardware <strong>listens</strong> to this key</td>
+</tr>
+<tr>
+<td><code>FeedbackKey</code></td>
+<td><code>&quot;MediaPlayer[Nax1.Player1]CrpcFb&quot;</code></td>
+<td>Hardware <strong>sends</strong> to this key; UI <strong>listens</strong> to this key</td>
+</tr>
+<tr>
+<td><code>ToString()</code></td>
+<td><code>&quot;Nax1.Player1&quot;</code></td>
+<td>Log messages, and the player name shown on the panel</td>
+</tr>
+</tbody>
+</table>
+<p>Why it matters to you:</p>
+<ul>
+<li><strong>Never type a broker key string by hand.</strong> Always ask the <code>MediaPlayerId</code> for <code>CommandKey</code> or
+<code>FeedbackKey</code>. A typo in a hand-typed key fails silently.</li>
+<li><strong>It's a <code>record</code>,</strong> so two <code>MediaPlayerId</code> objects with the same <code>HardwareId</code> and <code>PlayerNumber</code>
+are equal (<code>==</code> returns <code>true</code>). <code>CrpcUiConnection</code> uses this to tell whether you're reconnecting
+to the player you're already on.</li>
+<li><strong>A blank <code>HardwareId</code> throws <code>ArgumentException</code> at startup.</strong> That's on purpose: it's better to
+fail quickly and loudly than to have CRPC quietly go nowhere later.</li>
+</ul>
+<p>You give each media-player source its <code>MediaPlayerId</code> in <code>ControlSystem.SetupNaxSources()</code>:</p>
+<pre class="hljs"><code><div>NaxSourceConfiguration.AddSource(zone1, <span class="hljs-string">&quot;Media Player 1&quot;</span>, <span class="hljs-number">9</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-keyword">new</span> MediaPlayerId(<span class="hljs-string">&quot;Nax1&quot;</span>, <span class="hljs-number">1</span>));
+</div></code></pre>
+<hr>
+<h2 id="4-hardware-side-crpchardwareconnection">4. Hardware side: <code>CrpcHardwareConnection</code></h2>
+<h3 id="41-create-one-per-media-server">4.1 Create one per media server</h3>
+<p>In <code>HardwareSetup</code>, after you create the hardware wrapper:</p>
+<pre class="hljs"><code><div>myNaxamp = <span class="hljs-keyword">new</span> NaxAmp(<span class="hljs-number">0x10</span>, naxHardwareId, cs);
+
+<span class="hljs-built_in">ushort</span> naxPlayerCount = <span class="hljs-number">8</span>;
+myCrpcHardwareConnection = <span class="hljs-keyword">new</span> CrpcHardwareConnection(
+    myNaxamp.HardwareId,          <span class="hljs-comment">// 1. Unique name for this hardware, e.g. &quot;Nax1&quot;</span>
+    naxPlayerCount,               <span class="hljs-comment">// 2. How many players it has</span>
+    (playerNumber, crpcPayload) =&gt;  <span class="hljs-comment">// 3. How to send a CRPC command to the real hardware</span>
+    {
+        myNaxamp.SendCrpc(playerNumber, crpcPayload);
+    });
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>What to pass</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hardwareId</code></td>
+<td><code>string</code></td>
+<td>The same ID used in every <code>MediaPlayerId</code> for this hardware. <strong>Must be unique</strong>, and the check ignores case.</td>
+</tr>
+<tr>
+<td><code>playerCount</code></td>
+<td><code>ushort</code></td>
+<td>Number of players. CommandKeys are registered for players <code>1</code> through <code>playerCount</code>.</td>
+</tr>
+<tr>
+<td><code>sendCrpcToHardware</code></td>
+<td><code>CrpcHardwareConnection.SendCrpcToHardware</code></td>
+<td>A method or lambda that takes <code>(playerNumber, crpcPayload)</code> and sends it to the device.</td>
+</tr>
+</tbody>
+</table>
+<p>The class doesn't know what a <code>NaxAmp</code> is. You tell it how to talk to the hardware through the
+callback. That's why the same class can work with a different brand of player later.</p>
+<h4 id="writing-the-callback">Writing the callback</h4>
+<p><code>SendCrpcToHardware</code> is a named delegate declared inside <code>CrpcHardwareConnection</code>:</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-built_in">delegate</span> <span class="hljs-keyword">void</span> <span class="hljs-title">SendCrpcToHardware</span>(<span class="hljs-params"><span class="hljs-built_in">ushort</span> playerNumber, <span class="hljs-built_in">string</span> crpcPayload</span>)</span>;
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>playerNumber</code></td>
+<td><strong>1-based</strong> player number on this hardware (1 through <code>playerCount</code>).</td>
+</tr>
+<tr>
+<td><code>crpcPayload</code></td>
+<td>The serialized CRPC message from the panel. Forward it unchanged.</td>
+</tr>
+</tbody>
+</table>
+<p>To write the lambda: hover over the constructor's third parameter in Visual Studio (or press
+<code>Ctrl+Shift+Space</code> while typing the call) to see the delegate's signature and docs. Your lambda
+needs to take those two arguments and hand them to whatever method on your device class sends CRPC.
+The parameter names in your lambda are up to you, but matching the delegate's names (<code>playerNumber</code>,
+<code>crpcPayload</code>) keeps the code easy to compare with the docs.</p>
+<pre class="hljs"><code><div>(playerNumber, crpcPayload) =&gt;
+{
+    myNaxamp.SendCrpc(playerNumber, crpcPayload);
+}
+</div></code></pre>
+<p>The same shape works as an expression-bodied lambda or a named method:</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// Expression-bodied lambda</span>
+(playerNumber, crpcPayload) =&gt; myNaxamp.SendCrpc(playerNumber, crpcPayload)
+
+<span class="hljs-comment">// Named method (method group), if the signature matches exactly</span>
+<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">SendToNax</span>(<span class="hljs-params"><span class="hljs-built_in">ushort</span> playerNumber, <span class="hljs-built_in">string</span> crpcPayload</span>)</span> =&gt;
+    myNaxamp.SendCrpc(playerNumber, crpcPayload);
+<span class="hljs-comment">// ...</span>
+<span class="hljs-keyword">new</span> CrpcHardwareConnection(myNaxamp.HardwareId, <span class="hljs-number">8</span>, SendToNax);
+</div></code></pre>
+<p>The callback runs on the thread that delivers the UI's message, so keep it short and don't block.</p>
+<h3 id="42-feed-it-the-hardwares-feedback">4.2 Feed it the hardware's feedback</h3>
+<p>Hook the device's CRPC feedback event to <code>SendFeedback</code>.</p>
+<pre class="hljs"><code><div>myNaxamp.CrpcMessageReceived += (sender, e) =&gt;
+{
+    myCrpcHardwareConnection.SendFeedback((<span class="hljs-built_in">ushort</span>)e.Player, e.CRPCMessage);
+};
+</div></code></pre>
+<p><code>SendFeedback(playerNumber, crpcPayload)</code> puts the payload on that player's <code>FeedbackKey</code>.
+If no panel is connected to the player, the message is simply dropped. That's normal and is not logged.</p>
+<h3 id="43-rules-for-the-hardware-side">4.3 Rules for the hardware side</h3>
+<ul>
+<li><strong>One instance per piece of hardware, for the life of the program.</strong> A second instance with the
+same <code>hardwareId</code> (including <code>&quot;nax1&quot;</code> vs <code>&quot;Nax1&quot;</code>) throws <code>ArgumentException</code> at startup.</li>
+<li><strong>The <code>hardwareId</code> must exactly match the <code>HardwareId</code> in your <code>MediaPlayerId</code> configuration.</strong>
+If they don't match, the UI's commands go to a key nobody is listening on (see Troubleshooting).</li>
+<li><strong>Players are registered starting at 1.</strong> <code>CrpcHardwareConnection</code> only listens on players <code>1</code>
+through <code>playerCount</code>, so a <code>MediaPlayerId</code> with <code>PlayerNumber</code> <code>0</code> never reaches the hardware.
+If you add a device whose players are numbered from 0, still number its <code>MediaPlayerId</code>s from 1,
+translate in your callback (for example,
+<code>(playerNumber, crpcPayload) =&gt; device.Send(playerNumber - 1, crpcPayload)</code>), and translate back
+when you call <code>SendFeedback</code>.</li>
+<li><strong>Never unsubscribe from CommandKeys.</strong> The hardware should always be ready for commands from the UI.</li>
+</ul>
+<h3 id="44-example-adding-a-second-nax">4.4 Example: adding a second NAX</h3>
+<pre class="hljs"><code><div><span class="hljs-comment">// In HardwareSetup.  Use an IP ID that isn&#x27;t already in use.</span>
+myNaxamp2 = <span class="hljs-keyword">new</span> NaxAmp(<span class="hljs-number">0x12</span>, <span class="hljs-string">&quot;Nax2&quot;</span>, cs);
+
+myCrpcHardwareConnection2 = <span class="hljs-keyword">new</span> CrpcHardwareConnection(
+    myNaxamp2.HardwareId,
+    <span class="hljs-number">8</span>,
+    (playerNumber, crpcPayload) =&gt; myNaxamp2.SendCrpc(playerNumber, crpcPayload));
+
+myNaxamp2.CrpcMessageReceived += (sender, e) =&gt;
+    myCrpcHardwareConnection2.SendFeedback((<span class="hljs-built_in">ushort</span>)e.Player, e.CRPCMessage);
+</div></code></pre>
+<p>Then add its players as sources in <code>ControlSystem.SetupNaxSources()</code>:</p>
+<pre class="hljs"><code><div>NaxSourceConfiguration.AddSource(zone1, <span class="hljs-string">&quot;Media Player B2&quot;</span>, <span class="hljs-number">10</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-keyword">new</span> MediaPlayerId(<span class="hljs-string">&quot;Nax2&quot;</span>, <span class="hljs-number">1</span>));
+</div></code></pre>
+<p>You don't need to change anything in <code>UI</code> or <code>CrpcUiConnection</code>.</p>
+<hr>
+<h2 id="5-ui-side-crpcuiconnection">5. UI side: <code>CrpcUiConnection</code></h2>
+<h3 id="51-create-one-per-panel">5.1 Create one per panel</h3>
+<p>In the <code>UI</code> constructor:</p>
+<pre class="hljs"><code><div>myCrpcMediaPlayerConnection = <span class="hljs-keyword">new</span> CrpcUiConnection(
+    message =&gt; myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(message),  <span class="hljs-comment">// source-change messages</span>
+    crpc    =&gt; myContract.MediaControl.MediaPlayer.MediaPlayer_CRPC_FB(crpc));       <span class="hljs-comment">// CRPC feedback</span>
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>What to pass</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sendMessageFbToUi</code></td>
+<td><code>CrpcUiConnection.SendMessageFbToUi</code></td>
+<td>Sends a string to the Media Player's <strong>Message_FB</strong> input</td>
+</tr>
+<tr>
+<td><code>sendCrpcFbToUi</code></td>
+<td><code>CrpcUiConnection.SendCrpcFbToUi</code></td>
+<td>Sends a string to the Media Player's <strong>CRPC_FB</strong> input</td>
+</tr>
+</tbody>
+</table>
+<p>The class doesn't need to reference the Construct contract. It only calls the two callbacks you give it,
+which keeps the generated contract types out of the CRPC code.</p>
+<h4 id="writing-the-callbacks">Writing the callbacks</h4>
+<p>Both are named delegates declared inside <code>CrpcUiConnection</code>, each taking a single string:</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-built_in">delegate</span> <span class="hljs-keyword">void</span> <span class="hljs-title">SendMessageFbToUi</span>(<span class="hljs-params"><span class="hljs-built_in">string</span> message</span>)</span>;      <span class="hljs-comment">// source-change message (JSON)</span>
+<span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-built_in">delegate</span> <span class="hljs-keyword">void</span> <span class="hljs-title">SendCrpcFbToUi</span>(<span class="hljs-params"><span class="hljs-built_in">string</span> crpcPayload</span>)</span>;     <span class="hljs-comment">// CRPC feedback from the hardware player</span>
+</div></code></pre>
+<p>Each lambda's only job is to write that string, unchanged, to the matching Media Player input in
+your panel's generated contract. In this project that's:</p>
+<pre class="hljs"><code><div>message =&gt; myContract.MediaControl.MediaPlayer.MediaPlayer_Message_FB(message)
+crpc    =&gt; myContract.MediaControl.MediaPlayer.MediaPlayer_CRPC_FB(crpc)
+</div></code></pre>
+<p>The two are easy to swap by accident, and the compiler can't tell because both take a <code>string</code>.
+<strong>The first parameter is always the source-change channel (<code>Message_FB</code>); the second is always the
+CRPC channel (<code>CRPC_FB</code>).</strong> If the Media Player never connects, check the order first.</p>
+<p>If your panel's contract names the Media Player differently (for example a second Media Player
+object, or a different contract path), only these lambdas change. <code>CrpcUiConnection</code> stays the same.</p>
+<p>Each instance assigns itself an instance ID (1, 2, 3…) in the order the panels are created. The
+Media Player uses that ID as the <code>tag</code> in the source-change message. You don't set it yourself.</p>
+<h3 id="52-the-public-api-three-methods">5.2 The public API: three methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Call it when…</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Connect(MediaPlayerId?)</code></td>
+<td>The user picks a source that is a media player</td>
+<td>Sends the source-change message, then subscribes to that player's feedback</td>
+</tr>
+<tr>
+<td><code>SendCommand(string)</code></td>
+<td>The panel's Media Player sends CRPC</td>
+<td>Forwards the CRPC to the connected player</td>
+</tr>
+<tr>
+<td><code>DisconnectAsync()</code></td>
+<td>The user leaves the player, picks a non-player source, or the panel goes offline</td>
+<td>Sends &quot;source 0&quot;, waits 200 ms, then unsubscribes</td>
+</tr>
+</tbody>
+</table>
+<p>Every <code>Connect</code> should eventually be matched by a <code>DisconnectAsync</code>.</p>
+<h3 id="53-where-to-call-each-method">5.3 Where to call each method</h3>
+<p>There are <strong>five</strong> call sites in <code>UI.cs</code>. A new panel class needs the same five.</p>
+<p><strong>1. Panel sends CRPC → <code>SendCommand</code></strong></p>
+<pre class="hljs"><code><div>myContract.MediaControl.MediaPlayer.MediaPlayer_CRPCEvent += MediaPlayer_MediaPlayer_CRPCEvent;
+
+<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">MediaPlayer_MediaPlayer_CRPCEvent</span>(<span class="hljs-params"><span class="hljs-built_in">object</span> sender, UIEventArgs e</span>)</span>
+{
+    myCrpcMediaPlayerConnection.SendCommand(e.SigArgs.Sig.StringValue);
+}
+</div></code></pre>
+<p><strong>2. User selects a media-player source → show the page, then <code>Connect</code></strong></p>
+<pre class="hljs"><code><div><span class="hljs-keyword">if</span> (NaxSourceConfiguration.IsMediaPlayer(zone, buttonIndex))
+{
+    myContract.MediaControl.VisibilityJoin(<span class="hljs-literal">true</span>);    <span class="hljs-comment">// show the Media Player page first</span>
+    myContract.MediaControl.VisibilityJoin(<span class="hljs-literal">false</span>);
+
+    <span class="hljs-keyword">var</span> mediaPlayer = NaxSourceConfiguration.GetMediaPlayer(zone, buttonIndex);
+    myCrpcMediaPlayerConnection.Connect(mediaPlayer);
+
+    myContract.MediaControl.MediaPlayer.MediaPlayer_Offline(<span class="hljs-literal">false</span>);
+    myContract.MediaControl.MediaPlayer.MediaPlayer_Player_Name(mediaPlayer.ToString());
+}
+</div></code></pre>
+<p><strong>3. User selects a source that is <em>not</em> a media player → <code>DisconnectAsync</code> (fire and forget)</strong></p>
+<pre class="hljs"><code><div><span class="hljs-keyword">else</span>
+{
+    _ = myCrpcMediaPlayerConnection.DisconnectAsync();
+}
+</div></code></pre>
+<p><strong>4. User presses Return on the Media Player page → <code>await DisconnectAsync</code>, <em>then</em> flip the page</strong></p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">void</span> <span class="hljs-title">MediaControl_ReturnBtn_PressEvent</span>(<span class="hljs-params"><span class="hljs-built_in">object</span> sender, UIEventArgs e</span>)</span>
+{
+    <span class="hljs-keyword">if</span> (e.SigArgs.Sig.BoolValue)
+    {
+        <span class="hljs-keyword">await</span> myCrpcMediaPlayerConnection.DisconnectAsync();   <span class="hljs-comment">// waits ~200 ms</span>
+
+        myContract.Main.VisibilityJoin(<span class="hljs-literal">true</span>);                  <span class="hljs-comment">// now leave the page</span>
+        myContract.Main.VisibilityJoin(<span class="hljs-literal">false</span>);
+    }
+}
+</div></code></pre>
+<p><strong>5. Panel goes offline → <code>DisconnectAsync</code></strong></p>
+<pre class="hljs"><code><div><span class="hljs-keyword">else</span>   <span class="hljs-comment">// !args.DeviceOnLine</span>
+{
+    _ = myCrpcMediaPlayerConnection.DisconnectAsync();
+}
+</div></code></pre>
+<h3 id="54-what-connect-does-step-by-step">5.4 What <code>Connect</code> does, step by step</h3>
+<ol>
+<li>Looks up the player's <code>src</code> number from <code>NaxSourceConfiguration</code> (or uses <code>0</code> if you pass <code>null</code>),
+which is used in the following step.</li>
+<li>Builds the source-change JSON, for example <code>{&quot;ver&quot;:&quot;4.0.0&quot;,&quot;tag&quot;:&quot;01&quot;,&quot;src&quot;:&quot;3&quot;}</code>, and sends it
+through <code>sendMessageFbToUi</code>.</li>
+<li>If the player is the one you're already connected to, it stops here. There's no unsubscribe/resubscribe.</li>
+<li>Otherwise it unsubscribes from the old player's feedback, remembers the new player, and subscribes
+to the new player's <code>FeedbackKey</code>.</li>
+</ol>
+<p>Passing <code>null</code> sends <code>src 0</code> and leaves the panel unsubscribed.</p>
+<h3 id="55-what-disconnectasync-does-step-by-step">5.5 What <code>DisconnectAsync</code> does, step by step</h3>
+<ol>
+<li>If nothing is connected, it logs and returns.</li>
+<li>Sends the source-change message with <code>src 0</code> while the Media Player page is still open.</li>
+<li>Waits 200 ms (<code>Task.Delay</code>) so the panel's Media Player can process it. 200 ms was found by testing.</li>
+<li>If the panel is still connected to the same player, it unsubscribes.</li>
+<li>It <strong>never throws.</strong> Any exception is caught and logged.</li>
+</ol>
+<blockquote>
+<p><strong>Known limitation:</strong> step 4 can't tell &quot;still connected&quot; from &quot;reconnected to the same player
+during the 200 ms.&quot; If <code>Connect</code> is called with the same player during the delay, it skips
+resubscribing, and <code>DisconnectAsync</code> still unsubscribes. The Media Player stays open with no
+feedback. This project's UI can't trigger it, because source buttons are only on the Main page and
+Return awaits <code>DisconnectAsync</code> before flipping to Main. A layout that shows source buttons next
+to the Media Player could hit it if the user presses two sources within 200 ms.</p>
+</blockquote>
+<h3 id="56-why-you-cant-just-flip-the-page">5.6 Why you can't just flip the page</h3>
+<p>If the Media Player page closes before the panel processes the &quot;src 0&quot; message, the panel's player
+can end up in the wrong state. Then it may not connect properly the next time, especially to a
+different player. That's why the Return button <strong>awaits</strong> <code>DisconnectAsync</code> before the page flip,
+instead of using a hard-coded page flip in Construct.</p>
+<p>A future update to the CH5 Media Player may eliminate the need for this workaround.</p>
+<h3 id="57-adding-another-panel">5.7 Adding another panel</h3>
+<p>In <code>ControlSystem</code>, declare a field next to the existing panels, then create the panel in
+<code>InitializeSystem()</code>:</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// With the other fields</span>
+UI? myThirdXpanel;
+
+<span class="hljs-comment">// In InitializeSystem(), with the other panels</span>
+myThirdXpanel = <span class="hljs-keyword">new</span> UI(<span class="hljs-number">0x05</span>, <span class="hljs-keyword">this</span>);
+</div></code></pre>
+<p>Each <code>UI</code> creates its own <code>CrpcUiConnection</code>, so the new panel gets its own instance ID and
+subscriptions automatically. Nothing changes on the hardware side.</p>
+<hr>
+<h2 id="6-source-numbers-src">6. Source numbers (<code>src</code>)</h2>
+<p>The Media Player needs a <code>src</code> number for each player. <code>NaxSourceConfiguration</code> assigns them for you:</p>
+<ul>
+<li>Numbers go 1, 2, 3… in the order each <strong>unique</strong> player is first passed to <code>AddSource</code>.</li>
+<li>The same player added to several zones keeps the same number (because <code>MediaPlayerId</code> is a record).</li>
+<li><code>0</code> means &quot;no source.&quot;</li>
+<li>A player that was never added with <code>AddSource</code> gets <code>0</code>.</li>
+</ul>
+<p>Don't hard-code <code>src</code> numbers. Always let <code>GetMediaPlayerSrc</code> look them up.</p>
+<hr>
+<h2 id="7-checklists">7. Checklists</h2>
+<h3 id="adding-a-hardware-streaming-device">Adding a hardware streaming device</h3>
+<ul>
+<li><input type="checkbox" id="checkbox0"><label for="checkbox0">Create the device wrapper in <code>HardwareSetup</code> with a unique hardware ID.</label></li>
+<li><input type="checkbox" id="checkbox1"><label for="checkbox1">Create one <code>CrpcHardwareConnection</code> with that ID, the player count, and a send callback.</label></li>
+<li><input type="checkbox" id="checkbox2"><label for="checkbox2">Subscribe the device's CRPC feedback event to <code>SendFeedback</code>.</label></li>
+<li><input type="checkbox" id="checkbox3"><label for="checkbox3">Add each streaming player as a source with <code>new MediaPlayerId(&quot;&lt;same ID&gt;&quot;, &lt;player&gt;)</code>.</label></li>
+<li><input type="checkbox" id="checkbox4"><label for="checkbox4">Check the startup log for <code>&lt;ID&gt;.PlayerN is listening for CRPC on ...</code> for each player.</label></li>
+</ul>
+<h3 id="adding-a-panel">Adding a panel</h3>
+<ul>
+<li><input type="checkbox" id="checkbox5"><label for="checkbox5">Create a new <code>UI</code> with its own IP ID.</label></li>
+<li><input type="checkbox" id="checkbox6"><label for="checkbox6">If you're writing a new panel class, give it one <code>CrpcUiConnection</code> and all five call sites in section 5.3.</label></li>
+<li><input type="checkbox" id="checkbox7"><label for="checkbox7">Use <code>await DisconnectAsync()</code> before any page flip away from the Media Player.</label></li>
+</ul>
+<hr>
+<h2 id="8-troubleshooting-what-the-log-is-telling-you">8. Troubleshooting: what the log is telling you</h2>
+<table>
+<thead>
+<tr>
+<th>You see</th>
+<th>Meaning</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Startup <code>ArgumentException</code>: <em>A CrpcHardwareConnection with hardwareId 'X' already exists…</em></td>
+<td>Two hardware connections share an ID (case is ignored)</td>
+<td>Give each device a unique ID</td>
+</tr>
+<tr>
+<td>Startup <code>ArgumentException</code>: <em>A media player needs a HardwareId…</em></td>
+<td>A <code>MediaPlayerId</code> was created with a blank hardware ID</td>
+<td>Fix the configuration in <code>InitializeSystem()</code> (HardwareSetup instantiation) or <code>SetupNaxSources()</code></td>
+</tr>
+<tr>
+<td>Error: <em>UI instance N: no hardware is listening for Nax2.Player1…</em></td>
+<td>The UI sent a command to a key with no subscriber</td>
+<td>Check that the ID's spelling matches <code>HardwareSetup</code>, and that the player number is ≤ <code>playerCount</code></td>
+</tr>
+<tr>
+<td>Info: <em>…received a CRPC message… but no media player is currently connected. Message ignored</em></td>
+<td>The panel sent CRPC while disconnected</td>
+<td>Usually harmless (timing at page close). If constant, check that <code>Connect</code> is being called.</td>
+</tr>
+<tr>
+<td>Notice: <em>UI instance N connected to …CrpcFb</em>, but the panel's player stays blank</td>
+<td>Probably <code>src</code> is 0 because the player wasn't added with <code>AddSource</code></td>
+<td>Add the player to the source configuration</td>
+</tr>
+<tr>
+<td>Player works the first time but not after switching players</td>
+<td>The page was flipped before the source-change message was processed</td>
+<td><code>await DisconnectAsync()</code> before the page flip</td>
+</tr>
+<tr>
+<td>Info: <em>…is not connected to a media player. No disconnect action taken.</em></td>
+<td><code>DisconnectAsync</code> called while already disconnected</td>
+<td>Normal. No action needed.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="9-c-ideas-used-in-these-classes">9. C# ideas used in these classes</h2>
+<p>These are worth understanding before you change the code.</p>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>Where</th>
+<th>Why it's used</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Named delegate callbacks</strong> (<code>SendCrpcToHardware</code>, <code>SendMessageFbToUi</code>, <code>SendCrpcFbToUi</code>)</td>
+<td>Both constructors</td>
+<td>The CRPC classes don't need to know about <code>NaxAmp</code> or the Construct contract. You pass in <em>how</em> to send.</td>
+</tr>
+<tr>
+<td><strong>Lambda vs. named method</strong></td>
+<td><code>CrpcHardwareConnection</code> uses a lambda; <code>CrpcUiConnection</code> uses <code>ForwardCrpcFbToUi</code></td>
+<td>You can only remove a delegate from the broker if you pass the <strong>same</strong> method again. Lambdas are fine for subscriptions that are never removed.</td>
+</tr>
+<tr>
+<td><strong>Lambda capture in a <code>for</code> loop</strong></td>
+<td><code>CrpcHardwareConnection</code> constructor</td>
+<td>A lambda captures the <em>variable</em>, not its value. Each pass creates a local <code>MediaPlayerId</code> (<code>mediaPlayer</code>), and the lambda reads <code>mediaPlayer.PlayerNumber</code> instead of the loop variable, so each lambda gets its own copy.</td>
+</tr>
+<tr>
+<td><strong><code>record</code> equality</strong></td>
+<td><code>MediaPlayerId</code></td>
+<td><code>==</code> compares contents, so &quot;is this the same player?&quot; is one line.</td>
+</tr>
+<tr>
+<td><strong><code>static</code> fields</strong></td>
+<td><code>instanceCount</code>, <code>usedHardwareIds</code></td>
+<td>Shared by all instances. Used for unique UI instance IDs and duplicate hardware-ID detection.</td>
+</tr>
+<tr>
+<td><strong>Nullable references (<code>MediaPlayerId?</code>)</strong></td>
+<td><code>CrpcUiConnection</code></td>
+<td><code>null</code> has a real meaning: &quot;not connected.&quot;</td>
+</tr>
+<tr>
+<td><strong><code>async Task</code> + <code>await Task.Delay</code></strong></td>
+<td><code>DisconnectAsync</code></td>
+<td>Waits 200 ms without blocking the panel's event thread (it replaced <code>Thread.Sleep</code>).</td>
+</tr>
+<tr>
+<td><strong><code>async void</code></strong></td>
+<td>Return button handler</td>
+<td>Only for event handlers, which can't return <code>Task</code>. Everywhere else, use <code>async Task</code>.</td>
+</tr>
+<tr>
+<td><strong><code>_ = SomethingAsync();</code></strong></td>
+<td>Source select, offline handler</td>
+<td>&quot;Start this and don't wait for it.&quot; The <code>_ =</code> tells the reader (and the compiler) that you meant not to await it.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="10-dos-and-donts">10. Do's and don'ts</h2>
+<p><strong>Do</strong></p>
+<ul>
+<li>Get broker keys from <code>MediaPlayerId.CommandKey</code> / <code>FeedbackKey</code>.</li>
+<li>Create one <code>CrpcHardwareConnection</code> per device and one <code>CrpcUiConnection</code> per panel.</li>
+<li>Show the Media Player page, then call <code>Connect</code>.</li>
+<li><code>await DisconnectAsync()</code> before flipping away from the Media Player page.</li>
+<li>Read the log when something doesn't work. The messages tell you which side is misconfigured.</li>
+</ul>
+<p><strong>Don't</strong></p>
+<ul>
+<li>Don't call <code>Broker.AddDelegate</code> / <code>SendMessage</code> with CRPC keys yourself. Let these classes do it.</li>
+<li>Don't create a second <code>CrpcHardwareConnection</code> for the same hardware.</li>
+<li>Don't share one <code>CrpcUiConnection</code> between panels.</li>
+<li>Don't hard-code <code>src</code> numbers or broker key strings.</li>
+<li>Don't use <code>Thread.Sleep</code> to wait for the Media Player. It blocks the panel's event thread.</li>
+</ul>
+
+</body>
+</html>
