@@ -33,6 +33,10 @@ keys, and those keys come from `MediaPlayerId`.
 
 ## 2. Communication flow
 
+### One Panel, One Hardware Player
+![Single CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Player to CrpcHardwareConnection to Broker](diagrams/crpc-architecture-single.svg)
+
+### Multiple Panels, Multiple Hardware Players
 ![Multiple CH5 Media Player to CrpcUiConnection to Broker, and NAX Streaming Players to CrpcHardwareConnection to Broker](diagrams/crpc-architecture-multi.svg)
 
 Three things to remember:

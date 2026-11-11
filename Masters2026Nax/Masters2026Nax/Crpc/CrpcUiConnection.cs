@@ -194,7 +194,7 @@ namespace Masters2026Nax.Crpc
                 // the subpage is still open so it can process the message.
                 // This keeps the player in the correct state when it is
                 // reopened later.  I found that if the subpage is closed
-                // by a direct page flip and this change message isn't sent,
+                // by a direct page flip and this change message isn't processed,
                 // the player may not connect properly to the next player,
                 // particularly if it is a source change.
                 await Task.Delay(sourceChangeSettleTimeInMs);
